@@ -6,7 +6,11 @@
     <title>Catálogo de Cuentas - Gimnasio</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="./CSS/vista.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+
 </head>
 <body>
     <header class="bg-success text-white text-center py-3">
@@ -147,6 +151,8 @@
         </section>
 
         <button class="btn btn-success mb-4" onclick="exportAllToExcel()">Descargar Todo en Excel</button>
+        <button class="btn btn-danger mb-4" onclick="exportToPDF()">Descargar Todo en PDF</button>
+
     </main>
 
     <footer class="bg-success text-white text-center py-3">
@@ -154,6 +160,7 @@
     </footer>
 
     <script src="./JS/funcionalidad.js"></script>
+    
 </body>
 </html>
  
