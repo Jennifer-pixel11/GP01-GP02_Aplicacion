@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de Cuentas - Gimnasio</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./CSS/vista.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+</head>
+<body>
+    <header class="bg-success text-white text-center py-3">
+        <img id="headerImage" src="IMG/LOGO.jpg" alt="Logo del Gimnasio">
+        <h1>CATÁLOGO DE CUENTAS - GYM SPORT CENTER</h1>
+    </header>
+
+    <main class="container mt-4">
+        <!-- Libro Diario -->
+        <section class="mb-5">
+            <h2>Libro Diario</h2>
+            <form id="diaryForm" class="mb-3" onsubmit="addDiaryEntry(event)">
+                <div class="form-row">
+                    <div class="form-group col-md-3">
+                        <label for="fecha">Fecha</label>
+                        <input type="date" class="form-control" id="fecha" required>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="codigoCuenta">Código de la cuenta</label>
+                        <input type="text" class="form-control" id="codigoCuenta" required>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="cuenta">Cuenta</label>
+                        <select id="cuenta" class="form-control" required>
+                            <option value="" disabled selected>Seleccionar cuenta</option>
+                            <option value="Ventas">Ventas</option>
+                            <option value="Compras">Compras</option>
+                            <option value="Gastos">Gastos</option>
+                            <option value="Ingresos">Ingresos</option>
+                        </select>
+                        <button type="button" class="btn btn-link" onclick="addNewAccount()">Agregar nueva cuenta</button>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="debito">Débito</label>
+                        <input type="number" class="form-control" id="debito" value="0" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-3">
+                        <label for="credito">Crédito</label>
+                        <input type="number" class="form-control" id="credito" value="0" required>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <button type="submit" class="btn btn-primary mt-4">Agregar</button>
+                    </div>
+                </div>
+            </form>
+            <table id="diaryTable" class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Código de la cuenta</th>
+                        <th>Cuenta</th>
+                        <th>Débito</th>
+                        <th>Crédito</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+        <!-- Libro Mayor -->
+        <section class="mb-5">
+            <h2>Libro Mayor</h2>
+            <table id="mayorTable" class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Cuenta</th>
+                        <th>Saldo</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+        <!-- Libro de Ventas -->
+        <section class="mb-5">
+            <h2>Libro de Ventas</h2>
+            <form id="salesForm" class="mb-3" onsubmit="addSalesEntry(event)">
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label for="fechaVenta">Fecha</label>
+                        <input type="date" class="form-control" id="fechaVenta" required>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="clienteVenta">Cliente</label>
+                        <input type="text" class="form-control" id="clienteVenta" required>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="montoVenta">Monto</label>
+                        <input type="number" class="form-control" id="montoVenta" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Agregar Venta</button>
+            </form>
+            <table id="salesTable" class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Monto</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+        <!-- Libro de Compras -->
+        <section class="mb-5">
+            <h2>Libro de Compras</h2>
+            <form id="purchaseForm" class="mb-3" onsubmit="addPurchaseEntry(event)">
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label for="fechaCompra">Fecha</label>
+                        <input type="date" class="form-control" id="fechaCompra" required>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="proveedorCompra">Proveedor</label>
+                        <input type="text" class="form-control" id="proveedorCompra" required>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="montoCompra">Monto</label>
+                        <input type="number" class="form-control" id="montoCompra" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Agregar Compra</button>
+            </form>
+            <table id="purchaseTable" class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Proveedor</th>
+                        <th>Monto</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+        <button class="btn btn-success mb-4" onclick="exportAllToExcel()">Descargar Todo en Excel</button>
+    </main>
+
+    <footer class="bg-success text-white text-center py-3">
+        <p>SISTEMAS CONTABLES GP01-GP02 CICLO II 2024 &copy;</p>
+    </footer>
+
+    <script src="./JS/funcionalidad.js"></script>
+</body>
+</html>
