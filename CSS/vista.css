@@ -3,18 +3,19 @@ body {
 }
 
 header {
-    position: relative; 
-    padding: 10px; 
+    position: relative;
+    padding: 10px;
 }
 
 /* Estilo para la imagen */
 #headerImage {
-    position: absolute; 
-    top: 6px; 
-    left: 10px; 
-    width: 100px; 
-    height: 75px; 
+    position: absolute;
+    top: 6px;
+    left: 10px;
+    width: 100px;
+    height: 75px;
 }
+
 h2 {
     color: #343a40;
     border-bottom: 2px solid #28a745;
@@ -25,4 +26,63 @@ footer {
     position: relative;
     bottom: 0;
     width: 100%;
+}
+
+.menu {
+    list-style-type: none;
+    padding: 0;
+    display: flex;
+    gap: 200px;
+    background-color: #28a745;
+    text-align: center;
+
+}
+
+.menu li {
+    margin: 10px 0;
+    cursor: pointer;
+    color: white;
+    text-decoration: none;
+    margin: auto;
+    font-size: 18px;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+
+}
+
+/* Contenido oculto */
+.content {
+    display: none;
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    background-color: #f9f9f9;
+}
+
+.content.active {
+    display: block;
+}
+
+.bienvenida {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    /* Ocupa toda la pantalla */
+    font-size: 3em;
+    /* Texto grande */
+    font-weight: bold;
+    color: green;
+    background-color: #f0f0f0;
+    text-align: center;
+}
+
+button {
+    padding: 5px 10px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+td button {
+    display: inline-block;  /* Asegura que el botón se muestre correctamente */
+    margin: 0 auto;
 }

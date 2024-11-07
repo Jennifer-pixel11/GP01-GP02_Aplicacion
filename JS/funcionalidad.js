@@ -29,27 +29,52 @@ function addDiaryEntry(event) {
     const credito = parseFloat(document.getElementById("credito").value) || 0;
 
     const table = document.getElementById("diaryTable").getElementsByTagName("tbody")[0];
-    
-    // Validar si existe una entrada con la misma fecha
-    let existingRow = Array.from(table.rows).find(row => row.cells[0].innerText === fecha);
 
-    if (!existingRow) {
-        const newRow = table.insertRow();
-        newRow.insertCell(0).innerText = fecha;
-        newRow.insertCell(1).innerText = codigoCuenta;
-        newRow.insertCell(2).innerText = cuenta;
-        newRow.insertCell(3).innerText = debito.toFixed(2);
-        newRow.insertCell(4).innerText = credito.toFixed(2);
-    } else {
-        const newRow = table.insertRow();
-        newRow.insertCell(0).innerText = ""; // Dejar vacío si es la misma fecha
-        newRow.insertCell(1).innerText = codigoCuenta;
-        newRow.insertCell(2).innerText = cuenta;
-        newRow.insertCell(3).innerText = debito.toFixed(2);
-        newRow.insertCell(4).innerText = credito.toFixed(2);
+
+    // Verificar si ya existe una fila con la misma fecha
+    let existingRow = null;
+    if (table.rows.length > 0) {
+        existingRow = Array.from(table.rows).find(row => row.cells[0].innerText.trim() === fecha);
     }
 
-    // Actualizar saldo en el objeto cuentas
+    // Si no existe una fila con la misma fecha, crear nueva fila
+    if (!existingRow) {
+        const newRow = table.insertRow();
+
+        // Insertar la fecha en la primera celda
+        newRow.insertCell(0).innerText = fecha;
+        // Insertar el código de cuenta, cuenta, débito y crédito
+        newRow.insertCell(1).innerText = codigoCuenta;
+        newRow.insertCell(2).innerText = cuenta;
+        newRow.insertCell(3).innerText = debito.toFixed(2);
+        newRow.insertCell(4).innerText = credito.toFixed(2);
+
+        // Insertar la celda para el botón de "Eliminar"
+        const deleteCell = newRow.insertCell(newRow.cells.length);  // Asegurarse de que se inserta al final
+        const deleteButton = document.createElement("button");
+        deleteButton.innerText = "Eliminar";
+        deleteButton.onclick = function () {
+            deleteEntry(newRow, cuenta, debito, credito);
+        };
+        deleteCell.appendChild(deleteButton);
+    } else {
+        const newRow = table.insertRow();
+        newRow.insertCell(0).innerText = "";
+        newRow.insertCell(1).innerText = codigoCuenta;
+        newRow.insertCell(2).innerText = cuenta;
+        newRow.insertCell(3).innerText = debito.toFixed(2);
+        newRow.insertCell(4).innerText = credito.toFixed(2);
+
+        // Insertar la celda para el botón de "Eliminar"
+        const deleteCell = newRow.insertCell(newRow.cells.length);  // Asegurarse de que se inserta al final
+        const deleteButton = document.createElement("button");
+        deleteButton.innerText = "Eliminar";
+        deleteButton.onclick = function () {
+            deleteEntry(newRow, cuenta, debito, credito);
+        };
+        deleteCell.appendChild(deleteButton);
+    }
+
     if (cuenta in cuentas) {
         cuentas[cuenta].saldo += debito - credito;
     } else {
@@ -58,8 +83,21 @@ function addDiaryEntry(event) {
 
     // Llamar a la función para actualizar el Libro Mayor
     updateMayorTable();
-    
+
     document.getElementById("diaryForm").reset();
+}
+
+function deleteEntry(row, cuenta, debito, credito) {
+    // Eliminar la fila de la tabla
+    row.remove();
+
+    // Actualizar el saldo en el objeto 'cuentas'
+    if (cuenta in cuentas) {
+        cuentas[cuenta].saldo -= debito - credito;  // Restaurar el saldo eliminado
+    }
+
+    // Llamar a la función para actualizar el Libro Mayor
+    updateMayorTable();
 }
 
 // Función para actualizar el Libro Mayor en la tabla HTML
@@ -184,7 +222,7 @@ function exportAllToExcel() {
         mayorData.push([cuenta, saldo.toFixed(2)]);
     }
     const mayorWorksheet = XLSX.utils.aoa_to_sheet(mayorData);
-    
+
     // Aplica estilos similares al Libro Mayor
     const mayorHeaderStyle = {
         fill: {
@@ -224,7 +262,7 @@ function exportAllToExcel() {
         salesData.push(rowData);
     });
     const salesWorksheet = XLSX.utils.aoa_to_sheet(salesData);
-    
+
     // Aplicar estilos para ventas
     const salesHeaderStyle = {
         fill: {
@@ -252,7 +290,7 @@ function exportAllToExcel() {
             applyCellStyle(salesWorksheet, cellRef, generalCellStyle);
         }
     }
-    
+
     XLSX.utils.book_append_sheet(wb, salesWorksheet, "Libro de Ventas");
 
     // Libro de Compras
@@ -334,3 +372,20 @@ async function exportToPDF() {
     // Descargar el PDF
     doc.save('Catalogo_de_Cuentas_Gimnasio.pdf');
 }
+
+// Función para mostrar el contenido y ocultar la bienvenida
+function showContent(id) {
+    // Oculta la bienvenida
+    document.getElementById("bienvenida").style.display = "none";
+
+
+    // Oculta todos los contenidos
+    const contents = document.querySelectorAll('.content');
+    contents.forEach(content => content.classList.remove('active'));
+
+    // Muestra el contenido seleccionado
+    const selectedContent = document.getElementById(id);
+    selectedContent.classList.add('active');
+}
+
+
