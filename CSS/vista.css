@@ -23,7 +23,7 @@ h2 {
 }
 
 footer {
-    position: relative;
+    position: absolute;
     bottom: 0;
     width: 100%;
 }
@@ -66,7 +66,7 @@ footer {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 100vh;
+    height: 8em;
     /* Ocupa toda la pantalla */
     font-size: 3em;
     /* Texto grande */
@@ -86,3 +86,5 @@ td button {
     display: inline-block;  /* Asegura que el botón se muestre correctamente */
     margin: 0 auto;
 }
+
+ 

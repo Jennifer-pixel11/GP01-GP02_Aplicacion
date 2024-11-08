@@ -14,7 +14,7 @@
 
 </head>
 
-<body>
+<body onload="onload()">
     <header class="bg-success text-white text-center py-3">
         <img id="headerImage" src="IMG/LOGO.jpg" alt="Logo del Gimnasio">
         <h1>GYM SPORT CENTER</h1>
@@ -179,14 +179,28 @@
             </section>
         </div>
 
-        <button class="btn btn-success mb-4" onclick="exportAllToExcel()">Descargar Todo en Excel</button>
-        <button class="btn btn-danger mb-4" onclick="exportToPDF()">Descargar Todo en PDF</button>
+        <div id="exportButtons" style="display: none;">
+            <button class="btn btn-success mb-4" onclick="exportAllToExcel()">Descargar Todo en Excel</button>
+            <button class="btn btn-danger mb-4" onclick="exportToPDF()">Descargar Todo en PDF</button>
+        </div>
+        
 
+        <div id="upload" style="display: none;">
+            <h3>Subir archivo a Google Drive</h3>
+            <div class="mb-3">
+                <label for="formFile" class="form-label">Selecciona un archivo</label>
+                <input class="form-control" type="file" id="formFile">
+              </div>
+            <button type="button" class="btn btn-outline-success" id="uploadButton">Subir Archivo</button>
+        </div>
+        
+          <br>
+          <br>
     </main>
-
     <footer class="bg-success text-white text-center py-3">
         <p>SISTEMAS CONTABLES GP01-GP02 CICLO II 2024 &copy;</p>
     </footer>
+    
 
     <script src="./JS/funcionalidad.js"></script>
 

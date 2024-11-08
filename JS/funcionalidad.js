@@ -19,6 +19,111 @@ function addNewAccount() {
     }
 }
 
+////Funciones para subir archivo a Drive
+// Reemplaza con el ID de cliente de tu proyecto de Google Cloud
+const CLIENT_ID = '754241236882-9qed4rg8vv4qo7riu019bn00qh6d5vu1.apps.googleusercontent.com';
+const API_KEY = 'AIzaSyC5Y0fqENyjUg_9aC5CfGMQ40STeB-6uY0';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+
+let tokenClient;
+let gapiInited = false;
+let gisInited = false;
+
+// Cargar las bibliotecas de la API de Google
+function gapiLoaded() {
+  gapi.load('client', initializeGapiClient);
+}
+
+// Inicializar el cliente de la API de Google
+async function initializeGapiClient() {
+  await gapi.client.init({
+    apiKey: API_KEY,
+    discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
+  });
+  gapiInited = true;
+}
+
+// Cargar el script para autenticación
+function gisLoaded() {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: '', // Manejado por handleAuthClick
+  });
+  gisInited = true;
+}
+
+// Autenticar y obtener el token de acceso
+function handleAuthClick() {
+  tokenClient.callback = async (resp) => {
+    if (resp.error) {
+      console.error(resp.error);
+      return;
+    }
+    await uploadFile();
+  };
+
+  if (gapi.client.getToken() === null) {
+    tokenClient.requestAccessToken({ prompt: 'consent' });
+  } else {
+    tokenClient.requestAccessToken({ prompt: '' });
+  }
+}
+
+// Función para cargar el archivo a Google Drive
+async function uploadFile() {
+  const fileInput = document.getElementById('formFile');
+  const file = fileInput.files[0];
+
+  if (!file) {
+    alert("Selecciona un archivo primero.");
+    return;
+  }
+
+  const metadata = {
+    name: file.name,
+    mimeType: file.type
+  };
+
+  const form = new FormData();
+  form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+  form.append('file', file);
+
+  try {
+    const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
+      method: 'POST',
+      headers: new Headers({ 'Authorization': 'Bearer ' + gapi.client.getToken().access_token }),
+      body: form
+    });
+    const result = await response.json();
+    alert("Archivo subido con éxito!!");
+  } catch (error) {
+    console.error('Error al subir el archivo:', error);
+    alert('Error al subir el archivo');
+  }
+}
+
+// Manejar el clic en el botón de subir
+document.getElementById('uploadButton').onclick = () => handleAuthClick();
+
+// Cargar los scripts de la API de Google y el cliente de autenticación
+const script1 = document.createElement('script');
+script1.src = 'https://apis.google.com/js/api.js';
+script1.onload = gapiLoaded;
+document.body.appendChild(script1);
+
+const script2 = document.createElement('script');
+script2.src = 'https://accounts.google.com/gsi/client';
+script2.onload = gisLoaded;
+document.body.appendChild(script2);
+
+
+
+
+/////
+
+
+
 // Función para agregar una entrada en el Libro Diario y actualizar el saldo en el Libro Mayor
 function addDiaryEntry(event) {
     event.preventDefault();
@@ -386,6 +491,12 @@ function showContent(id) {
     // Muestra el contenido seleccionado
     const selectedContent = document.getElementById(id);
     selectedContent.classList.add('active');
+    const box = document.getElementById("upload")
+    const exp = document.getElementById("exportButtons")
+    exp.style.display = "block"
+    box.style.display = "block"
 }
+
+
 
 
