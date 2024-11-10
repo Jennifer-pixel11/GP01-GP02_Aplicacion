@@ -117,11 +117,116 @@ script2.src = 'https://accounts.google.com/gsi/client';
 script2.onload = gisLoaded;
 document.body.appendChild(script2);
 
+///// PERSISTENCIA EN LOCAL STORAGE 
+// Función para guardar las entradas del Diario en el localStorage
+function saveDiaryToLocalStorage() {
+    const diaryData = [];
+    document.querySelectorAll('#diaryTable tbody tr').forEach(row => {
+        const rowData = {
+            fecha: row.cells[0].innerText,
+            descripcion: row.cells[1].innerText,
+            debe: parseFloat(row.cells[2].innerText) || 0,
+            haber: parseFloat(row.cells[3].innerText) || 0
+        };
+        diaryData.push(rowData);
+    });
+    localStorage.setItem('diaryData', JSON.stringify(diaryData));
+}
 
+// Función para cargar las entradas del Diario desde el localStorage
+function loadDiaryFromLocalStorage() {
+    const diaryData = JSON.parse(localStorage.getItem('diaryData'));
+    if (diaryData && Array.isArray(diaryData)) {
+        const table = document.getElementById("diaryTable").getElementsByTagName("tbody")[0];
+        diaryData.forEach(({ fecha, descripcion, debe, haber }) => {
+            const newRow = table.insertRow();
+            newRow.insertCell(0).innerText = fecha;
+            newRow.insertCell(1).innerText = descripcion;
+            newRow.insertCell(2).innerText = debe;
+            newRow.insertCell(3).innerText = haber;
+        });
+    }
+}
 
+function saveAccountsToLocalStorage() {
+    localStorage.setItem('cuentas', JSON.stringify(cuentas));
+}
+
+function loadAccountsFromLocalStorage() {
+    const savedAccounts = localStorage.getItem('cuentas');
+    if (savedAccounts) {
+        Object.assign(cuentas, JSON.parse(savedAccounts));
+        updateMayorTable(); // Para actualizar la tabla de saldos con los datos cargados
+    }
+}
+
+// Función para guardar las compras en el localStorage
+function savePurchaseToLocalStorage() {
+    const purchaseData = [];
+    document.querySelectorAll('#purchaseTable tbody tr').forEach(row => {
+        const rowData = {
+            fechaCompra: row.cells[0].innerText,
+            proveedorCompra: row.cells[1].innerText,
+            montoCompra: parseFloat(row.cells[2].innerText) || 0
+        };
+        purchaseData.push(rowData);
+    });
+    localStorage.setItem('purchaseData', JSON.stringify(purchaseData));
+}
+
+// Función para guardar las ventas en el localStorage
+function saveSalesToLocalStorage() {
+    const salesData = [];
+    document.querySelectorAll('#salesTable tbody tr').forEach(row => {
+        const rowData = {
+            fechaVenta: row.cells[0].innerText,
+            clienteVenta: row.cells[1].innerText,
+            montoVenta: parseFloat(row.cells[2].innerText) || 0
+        };
+        salesData.push(rowData);
+    });
+    localStorage.setItem('salesData', JSON.stringify(salesData));
+}
+
+// Función para cargar las compras desde el localStorage
+function loadPurchasesFromLocalStorage() {
+    const purchaseData = JSON.parse(localStorage.getItem('purchaseData'));
+    if (purchaseData && Array.isArray(purchaseData)) {
+        const table = document.getElementById("purchaseTable").getElementsByTagName("tbody")[0];
+        purchaseData.forEach(({ fechaCompra, proveedorCompra, montoCompra }) => {
+            const newRow = table.insertRow();
+            newRow.insertCell(0).innerText = fechaCompra;
+            newRow.insertCell(1).innerText = proveedorCompra;
+            newRow.insertCell(2).innerText = montoCompra;
+            cuentas["Compras"].saldo += montoCompra; // Actualiza el saldo en el objeto cuentas
+        });
+        updateMayorTable(); // Actualiza la tabla del Libro Mayor
+    }
+}
+
+// Función para cargar las ventas desde el localStorage
+function loadSalesFromLocalStorage() {
+    const salesData = JSON.parse(localStorage.getItem('salesData'));
+    if (salesData && Array.isArray(salesData)) {
+        const table = document.getElementById("salesTable").getElementsByTagName("tbody")[0];
+        salesData.forEach(({ fechaVenta, clienteVenta, montoVenta }) => {
+            const newRow = table.insertRow();
+            newRow.insertCell(0).innerText = fechaVenta;
+            newRow.insertCell(1).innerText = clienteVenta;
+            newRow.insertCell(2).innerText = montoVenta;
+            cuentas["Ventas"].saldo += montoVenta; // Actualiza el saldo en el objeto cuentas
+        });
+        updateMayorTable(); // Actualiza la tabla del Libro Mayor
+    }
+}
 
 /////
-
+document.addEventListener('DOMContentLoaded', () => {
+    loadAccountsFromLocalStorage()
+    loadPurchasesFromLocalStorage()
+    loadSalesFromLocalStorage()
+    loadDiaryFromLocalStorage()
+});
 
 
 // Función para agregar una entrada en el Libro Diario y actualizar el saldo en el Libro Mayor
@@ -186,7 +291,10 @@ function addDiaryEntry(event) {
         alert("La cuenta especificada no existe.");
     }
 
-    // Llamar a la función para actualizar el Libro Mayor
+    // Guardar automáticamente en el localStorage después de agregar la entrada
+    saveDiaryToLocalStorage();
+    saveAccountsToLocalStorage();
+
     updateMayorTable();
 
     document.getElementById("diaryForm").reset();
@@ -216,6 +324,7 @@ function updateMayorTable() {
         mayorTableBody.appendChild(row);
     }
 }
+
 function addSalesEntry(event) {
     event.preventDefault();
     const fechaVenta = document.getElementById("fechaVenta").value;
@@ -231,7 +340,9 @@ function addSalesEntry(event) {
     cuentas["Ventas"].saldo += montoVenta;
     updateMayorTable();
 
+    saveSalesToLocalStorage(); // Guardar al localStorage
     document.getElementById("salesForm").reset();
+
 }
 
 function addPurchaseEntry(event) {
@@ -249,7 +360,9 @@ function addPurchaseEntry(event) {
     cuentas["Compras"].saldo += montoCompra;
     updateMayorTable();
 
+    savePurchaseToLocalStorage(); // Guardar al localStorage
     document.getElementById("purchaseForm").reset();
+
 }
 
 
