@@ -124,9 +124,10 @@ function saveDiaryToLocalStorage() {
     document.querySelectorAll('#diaryTable tbody tr').forEach(row => {
         const rowData = {
             fecha: row.cells[0].innerText,
-            descripcion: row.cells[1].innerText,
-            debe: parseFloat(row.cells[2].innerText) || 0,
-            haber: parseFloat(row.cells[3].innerText) || 0
+            codigoCuenta: row.cells[1].innerText,
+            cuenta: row.cells[2].innerText,
+            debe: parseFloat(row.cells[3].innerText) || 0,
+            haber: parseFloat(row.cells[4].innerText) || 0
         };
         diaryData.push(rowData);
     });
@@ -138,14 +139,30 @@ function loadDiaryFromLocalStorage() {
     const diaryData = JSON.parse(localStorage.getItem('diaryData'));
     if (diaryData && Array.isArray(diaryData)) {
         const table = document.getElementById("diaryTable").getElementsByTagName("tbody")[0];
-        diaryData.forEach(({ fecha, descripcion, debe, haber }) => {
+        diaryData.forEach(({ fecha, cuenta, codigoCuenta, debe, haber }) => {
             const newRow = table.insertRow();
             newRow.insertCell(0).innerText = fecha;
-            newRow.insertCell(1).innerText = descripcion;
-            newRow.insertCell(2).innerText = debe;
-            newRow.insertCell(3).innerText = haber;
+            newRow.insertCell(1).innerText = codigoCuenta;
+            newRow.insertCell(2).innerText = cuenta;
+            newRow.insertCell(3).innerText = debe;
+            newRow.insertCell(4).innerText = haber;
+            // Agregar la celda de "Eliminar" con el botón
+            const actionsCell = newRow.insertCell(5);
+            const deleteButton = document.createElement("button");
+            deleteButton.className = "btn btn-danger btn-sm";
+            deleteButton.innerText = "Eliminar";
+            deleteButton.onclick = function () {
+                deleteDiaryEntry(newRow);
+            };
+            actionsCell.appendChild(deleteButton);
         });
     }
+}
+
+// Función para eliminar una entrada de la tabla del Diario y actualizar el localStorage
+function deleteDiaryEntry(row) {
+    row.remove(); // Elimina la fila de la tabla
+    saveDiaryToLocalStorage(); // Actualiza el localStorage después de eliminar la fila
 }
 
 function saveAccountsToLocalStorage() {
@@ -262,6 +279,7 @@ function addDiaryEntry(event) {
         // Insertar la celda para el botón de "Eliminar"
         const deleteCell = newRow.insertCell(newRow.cells.length);  // Asegurarse de que se inserta al final
         const deleteButton = document.createElement("button");
+        deleteButton.className = "btn btn-danger btn-sm";
         deleteButton.innerText = "Eliminar";
         deleteButton.onclick = function () {
             deleteEntry(newRow, cuenta, debito, credito);
@@ -278,9 +296,10 @@ function addDiaryEntry(event) {
         // Insertar la celda para el botón de "Eliminar"
         const deleteCell = newRow.insertCell(newRow.cells.length);  // Asegurarse de que se inserta al final
         const deleteButton = document.createElement("button");
+        deleteButton.className = "btn btn-danger btn-sm";
         deleteButton.innerText = "Eliminar";
         deleteButton.onclick = function () {
-            deleteEntry(newRow, cuenta, debito, credito);
+            deleteDiaryEntry(newRow);
         };
         deleteCell.appendChild(deleteButton);
     }
@@ -364,8 +383,6 @@ function addPurchaseEntry(event) {
     document.getElementById("purchaseForm").reset();
 
 }
-
-
 
 function exportAllToExcel() {
     const wb = XLSX.utils.book_new();
@@ -554,42 +571,116 @@ function exportAllToExcel() {
     // Descargar el archivo
     XLSX.writeFile(wb, 'Catálogo_de_Cuentas_Gimnasio.xlsx');
 }
-async function exportToPDF() {
+
+/*async function exportToPDF() {
     const { jsPDF } = window.jspdf;
-
-    // Crear una instancia de jsPDF
     const doc = new jsPDF();
+  
+    // Definir un tamaño estándar para las imágenes (ajustable)
+    const imgWidth = 190;
+    const imgHeight = 0; // Altura automática basada en el ancho
+  
+    // Capturar y agregar Libro Diario
+    try {
+        const diaryTable = document.getElementById("diaryTable");
+        const diaryCanvas = await html2canvas(diaryTable);
+        const diaryImageData = diaryCanvas.toDataURL("image/png");
+        doc.addImage(diaryImageData, "PNG", 10, 10, imgWidth, imgHeight);
+    } catch (error) {
+        console.error("Error capturando el Libro Diario:", error);
+    }
 
-    // Capturar el Libro Diario
-    const diaryTable = document.getElementById("diaryTable");
-    const diaryCanvas = await html2canvas(diaryTable);
-    const diaryImageData = diaryCanvas.toDataURL("image/png");
-    doc.addImage(diaryImageData, "PNG", 10, 10, 190, 0); // Ajusta la posición y tamaño según sea necesario
-
-    // Agregar una nueva página para el Libro Mayor
+    // Agregar nueva página para el Libro Mayor
     doc.addPage();
-    const mayorTable = document.getElementById("mayorTable");
-    const mayorCanvas = await html2canvas(mayorTable);
-    const mayorImageData = mayorCanvas.toDataURL("image/png");
-    doc.addImage(mayorImageData, "PNG", 10, 10, 190, 0); // Ajusta la posición y tamaño según sea necesario
+    try {
+        const mayorTable = document.getElementById("mayorTable");
+        const mayorCanvas = await html2canvas(mayorTable);
+        const mayorImageData = mayorCanvas.toDataURL("image/png");
+        doc.addImage(mayorImageData, "PNG", 10, 10, imgWidth, imgHeight);
+    } catch (error) {
+        console.error("Error capturando el Libro Mayor:", error);
+    }
 
-    // Agregar una nueva página para el Libro de Ventas
+    // Agregar nueva página para el Libro de Ventas
     doc.addPage();
-    const salesTable = document.getElementById("salesTable");
-    const salesCanvas = await html2canvas(salesTable);
-    const salesImageData = salesCanvas.toDataURL("image/png");
-    doc.addImage(salesImageData, "PNG", 10, 10, 190, 0); // Ajusta la posición y tamaño según sea necesario
+    try {
+        const salesTable = document.getElementById("salesTable");
+        const salesCanvas = await html2canvas(salesTable);
+        const salesImageData = salesCanvas.toDataURL("image/png");
+        doc.addImage(salesImageData, "PNG", 10, 10, imgWidth, imgHeight);
+    } catch (error) {
+        console.error("Error capturando el Libro de Ventas:", error);
+    }
 
-    // Agregar una nueva página para el Libro de Compras
+    // Agregar nueva página para el Libro de Compras
     doc.addPage();
-    const purchaseTable = document.getElementById("purchaseTable");
-    const purchaseCanvas = await html2canvas(purchaseTable);
-    const purchaseImageData = purchaseCanvas.toDataURL("image/png");
-    doc.addImage(purchaseImageData, "PNG", 10, 10, 190, 0); // Ajusta la posición y tamaño según sea necesario
+    try {
+        const purchaseTable = document.getElementById("purchaseTable");
+        const purchaseCanvas = await html2canvas(purchaseTable);
+        const purchaseImageData = purchaseCanvas.toDataURL("image/png");
+        doc.addImage(purchaseImageData, "PNG", 10, 10, imgWidth, imgHeight);
+    } catch (error) {
+        console.error("Error capturando el Libro de Compras:", error);
+    }
 
     // Descargar el PDF
     doc.save('Catalogo_de_Cuentas_Gimnasio.pdf');
+}*/
+
+async function exportToPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    let addedPages = false; // Para controlar si se añade alguna página
+
+    // Función para verificar si un canvas es "blanco"
+    const isCanvasBlank = (canvas) => {
+        if (canvas.width === 0 || canvas.height === 0) {
+            return true; // Si el canvas no tiene dimensiones válidas, consideramos que está vacío
+        }
+        
+        const context = canvas.getContext('2d');
+        const pixelData = context.getImageData(0, 0, canvas.width, canvas.height).data;
+
+        // Recorre los píxeles en saltos y verifica si todos son blancos
+        for (let i = 0; i < pixelData.length; i += 4) {
+            if (!(pixelData[i] === 255 && pixelData[i + 1] === 255 && pixelData[i + 2] === 255 && pixelData[i + 3] === 255)) {
+                return false; // Tiene contenido
+            }
+        }
+        return true; // Es blanco
+    };
+
+    // Función para añadir tablas al PDF solo si no están vacías
+    const addTableToPDF = async (tableId, title, x, y) => {
+        const table = document.getElementById(tableId);
+        const canvas = await html2canvas(table);
+        
+        // Verifica si la tabla tiene contenido
+        if (!isCanvasBlank(canvas)) {
+            // Si tiene contenido, añade el título y la tabla
+            doc.setFontSize(16);
+            doc.text(title, x, y);  // Coloca el título en la posición (x, y)
+            const imgData = canvas.toDataURL("image/png");
+            doc.addImage(imgData, "PNG", x, y + 10, 190, 0); // Ajusta la posición vertical si es necesario
+            addedPages = true; // Marca que se ha añadido una página
+            doc.addPage(); // Añade una nueva página después de cada tabla
+        }
+    };
+
+    // Añadir cada tabla al PDF con un título solo si tiene datos
+    await addTableToPDF("diaryTable", "Libro Diario", 10, 20);  // Título: "Libro Diario"
+    await addTableToPDF("mayorTable", "Libro Mayor", 10, 20);    // Título: "Libro Mayor"
+    await addTableToPDF("salesTable", "Libro de Ventas", 10, 20);  // Título: "Libro de Ventas"
+    await addTableToPDF("purchaseTable", "Libro de Compras", 10, 20);  // Título: "Libro de Compras"
+
+    // Guarda el PDF solo si tiene contenido
+    if (addedPages) {
+        doc.save("Catalogo_de_Cuentas_Gimnasio.pdf");
+    } else {
+        alert("No hay datos para exportar al PDF.");
+    }
 }
+
 
 // Función para mostrar el contenido y ocultar la bienvenida
 function showContent(id) {
@@ -609,7 +700,4 @@ function showContent(id) {
     exp.style.display = "block"
     box.style.display = "block"
 }
-
-
-
 

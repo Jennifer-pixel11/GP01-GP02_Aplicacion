@@ -14,7 +14,7 @@
 
 </head>
 
-<body onload="onload()">
+<body>
     <header class="bg-success text-white text-center py-3">
         <img id="headerImage" src="IMG/LOGO.jpg" alt="Logo del Gimnasio">
         <h1>GYM SPORT CENTER</h1>
@@ -63,13 +63,13 @@
                         </div>
                         <div class="form-group col-md-3">
                             <label for="debito">Débito</label>
-                            <input type="number" class="form-control" id="debito" value="0" required>
+                            <input type="number" class="form-control" id="debito" step="0.01" value="0" required>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group col-md-3">
                             <label for="credito">Crédito</label>
-                            <input type="number" class="form-control" id="credito" value="0" required>
+                            <input type="number" class="form-control" id="credito" step="0.01" value="0" required>
                         </div>
                         <div class="form-group col-md-3">
                             <button type="submit" class="btn btn-primary mt-4">Agregar</button>
@@ -126,7 +126,7 @@
                         </div>
                         <div class="form-group col-md-4">
                             <label for="montoVenta">Monto</label>
-                            <input type="number" class="form-control" id="montoVenta" required>
+                            <input type="number" step="0.01" class="form-control" id="montoVenta" required>
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary">Agregar Venta</button>
@@ -161,7 +161,7 @@
                         </div>
                         <div class="form-group col-md-4">
                             <label for="montoCompra">Monto</label>
-                            <input type="number" class="form-control" id="montoCompra" required>
+                            <input type="number" class="form-control" step="0.01" id="montoCompra" required>
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary">Agregar Compra</button>
