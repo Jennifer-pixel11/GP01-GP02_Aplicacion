@@ -152,20 +152,14 @@ function loadDiaryFromLocalStorage() {
             deleteButton.className = "btn btn-danger btn-sm";
             deleteButton.innerText = "Eliminar";
             deleteButton.onclick = function () {
-                deleteDiaryEntry(newRow);
+                deleteEntry(newRow, cuenta, debe, haber);
             };
             actionsCell.appendChild(deleteButton);
         });
     }
 }
 
-// Función para eliminar una entrada de la tabla del Diario y actualizar el localStorage
-function deleteDiaryEntry(row) {
-    row.remove(); // Elimina la fila de la tabla
-    saveDiaryToLocalStorage(); // Actualiza el localStorage después de eliminar la fila
-}
-
-function saveAccountsToLocalStorage() {
+function saveCuentasToLocalStorage() {
     localStorage.setItem('cuentas', JSON.stringify(cuentas));
 }
 
@@ -215,7 +209,18 @@ function loadPurchasesFromLocalStorage() {
             newRow.insertCell(0).innerText = fechaCompra;
             newRow.insertCell(1).innerText = proveedorCompra;
             newRow.insertCell(2).innerText = montoCompra;
-            cuentas["Compras"].saldo += montoCompra; // Actualiza el saldo en el objeto cuentas
+            // Agregar botón "Eliminar"
+            const deleteCell = newRow.insertCell(3);
+            const deleteButton = document.createElement("button");
+            deleteButton.innerText = "Eliminar";
+            deleteButton.className = "btn btn-danger btn-sm";
+            deleteButton.onclick = function () {
+                deletePurchaseEntry(newRow, parseFloat(montoCompra)); // Llama a la función de eliminación de compras
+            };
+            deleteCell.appendChild(deleteButton);
+
+            // Actualiza el saldo en el objeto cuentas
+            //cuentas["Compras"].saldo += parseFloat(montoCompra);
         });
         updateMayorTable(); // Actualiza la tabla del Libro Mayor
     }
@@ -231,7 +236,18 @@ function loadSalesFromLocalStorage() {
             newRow.insertCell(0).innerText = fechaVenta;
             newRow.insertCell(1).innerText = clienteVenta;
             newRow.insertCell(2).innerText = montoVenta;
-            cuentas["Ventas"].saldo += montoVenta; // Actualiza el saldo en el objeto cuentas
+            // Agregar botón "Eliminar"
+            const deleteCell = newRow.insertCell(3);
+            const deleteButton = document.createElement("button");
+            deleteButton.innerText = "Eliminar";
+            deleteButton.className = "btn btn-danger btn-sm";
+            deleteButton.onclick = function () {
+                deleteSalesEntry(newRow, parseFloat(montoVenta)); // Llama a la función de eliminación de ventas
+            };
+            deleteCell.appendChild(deleteButton);
+
+            // Actualiza el saldo en el objeto cuentas
+            //cuentas["Ventas"].saldo += parseFloat(montoVenta);
         });
         updateMayorTable(); // Actualiza la tabla del Libro Mayor
     }
@@ -256,7 +272,9 @@ function addDiaryEntry(event) {
     const credito = parseFloat(document.getElementById("credito").value) || 0;
 
     const table = document.getElementById("diaryTable").getElementsByTagName("tbody")[0];
-
+    
+    // Formatear la fecha a dd/MM/yyyy
+    const ftdFechaDiary = formatDateToDDMMYYYY(fecha);
 
     // Verificar si ya existe una fila con la misma fecha
     let existingRow = null;
@@ -269,7 +287,7 @@ function addDiaryEntry(event) {
         const newRow = table.insertRow();
 
         // Insertar la fecha en la primera celda
-        newRow.insertCell(0).innerText = fecha;
+        newRow.insertCell(0).innerText = ftdFechaDiary;
         // Insertar el código de cuenta, cuenta, débito y crédito
         newRow.insertCell(1).innerText = codigoCuenta;
         newRow.insertCell(2).innerText = cuenta;
@@ -299,7 +317,7 @@ function addDiaryEntry(event) {
         deleteButton.className = "btn btn-danger btn-sm";
         deleteButton.innerText = "Eliminar";
         deleteButton.onclick = function () {
-            deleteDiaryEntry(newRow);
+            deleteEntry(newRow, cuenta, debito, credito);
         };
         deleteCell.appendChild(deleteButton);
     }
@@ -312,8 +330,7 @@ function addDiaryEntry(event) {
 
     // Guardar automáticamente en el localStorage después de agregar la entrada
     saveDiaryToLocalStorage();
-    saveAccountsToLocalStorage();
-
+    saveCuentasToLocalStorage();
     updateMayorTable();
 
     document.getElementById("diaryForm").reset();
@@ -329,6 +346,8 @@ function deleteEntry(row, cuenta, debito, credito) {
     }
 
     // Llamar a la función para actualizar el Libro Mayor
+    saveDiaryToLocalStorage();
+    saveCuentasToLocalStorage();
     updateMayorTable();
 }
 
@@ -344,44 +363,102 @@ function updateMayorTable() {
     }
 }
 
+function formatDateToDDMMYYYY(dateString) {
+    if (!dateString) return ""; // Maneja el caso en que la fecha esté vacía
+    const [year, month, day] = dateString.split("-");
+    return `${day}/${month}/${year}`;
+}
+
+// Función para agregar una entrada de venta
 function addSalesEntry(event) {
     event.preventDefault();
     const fechaVenta = document.getElementById("fechaVenta").value;
     const clienteVenta = document.getElementById("clienteVenta").value;
     const montoVenta = parseFloat(document.getElementById("montoVenta").value) || 0;
+    
+    // Formatear la fecha a dd/MM/yyyy
+    const ftdFechaVenta = formatDateToDDMMYYYY(fechaVenta);
 
     const table = document.getElementById("salesTable").getElementsByTagName("tbody")[0];
     const newRow = table.insertRow();
-    newRow.insertCell(0).innerText = fechaVenta;
+    newRow.insertCell(0).innerText = ftdFechaVenta;
     newRow.insertCell(1).innerText = clienteVenta;
     newRow.insertCell(2).innerText = montoVenta;
 
+    // Agrega el botón "Eliminar"
+    const deleteCell = newRow.insertCell(3);
+    const deleteButton = document.createElement("button");
+    deleteButton.innerText = "Eliminar";
+    deleteButton.className = "btn btn-danger btn-sm";
+    deleteButton.onclick = function () {
+        deleteSalesEntry(newRow, montoVenta); // Llama a la función de eliminación de ventas
+    };
+    deleteCell.appendChild(deleteButton);
+
+    // Actualiza el saldo y almacena en localStorage
     cuentas["Ventas"].saldo += montoVenta;
     updateMayorTable();
-
-    saveSalesToLocalStorage(); // Guardar al localStorage
+    saveSalesToLocalStorage();
+    saveCuentasToLocalStorage();
     document.getElementById("salesForm").reset();
-
 }
 
+// Función para agregar una entrada de compra
 function addPurchaseEntry(event) {
     event.preventDefault();
     const fechaCompra = document.getElementById("fechaCompra").value;
     const proveedorCompra = document.getElementById("proveedorCompra").value;
     const montoCompra = parseFloat(document.getElementById("montoCompra").value) || 0;
 
+    // Formatear la fecha a dd/MM/yyyy
+    const ftdFechaVenta = formatDateToDDMMYYYY(fechaCompra);
+
     const table = document.getElementById("purchaseTable").getElementsByTagName("tbody")[0];
     const newRow = table.insertRow();
-    newRow.insertCell(0).innerText = fechaCompra;
+    newRow.insertCell(0).innerText = ftdFechaVenta;
     newRow.insertCell(1).innerText = proveedorCompra;
     newRow.insertCell(2).innerText = montoCompra;
 
+    // Agrega el botón "Eliminar"
+    const deleteCell = newRow.insertCell(3);
+    const deleteButton = document.createElement("button");
+    deleteButton.innerText = "Eliminar";
+    deleteButton.className = "btn btn-danger btn-sm";
+    deleteButton.onclick = function () {
+        deletePurchaseEntry(newRow, montoCompra); // Llama a la función de eliminación de compras
+    };
+    deleteCell.appendChild(deleteButton);
+
+    // Actualiza el saldo y almacena en localStorage
     cuentas["Compras"].saldo += montoCompra;
     updateMayorTable();
-
-    savePurchaseToLocalStorage(); // Guardar al localStorage
+    savePurchaseToLocalStorage();
+    saveCuentasToLocalStorage();
     document.getElementById("purchaseForm").reset();
+}
 
+// Función para eliminar una entrada de venta
+function deleteSalesEntry(row, monto) {
+    const table = document.getElementById("salesTable").getElementsByTagName("tbody")[0];
+    table.removeChild(row);
+
+    // Resta el monto eliminado del saldo y actualiza el localStorage
+    cuentas["Ventas"].saldo -= monto;
+    updateMayorTable();
+    saveCuentasToLocalStorage();
+    saveSalesToLocalStorage();
+}
+
+// Función para eliminar una entrada de compra
+function deletePurchaseEntry(row, monto) {
+    const table = document.getElementById("purchaseTable").getElementsByTagName("tbody")[0];
+    table.removeChild(row);
+
+    // Resta el monto eliminado del saldo y actualiza el localStorage
+    cuentas["Compras"].saldo -= monto;
+    updateMayorTable();
+    saveCuentasToLocalStorage();
+    savePurchaseToLocalStorage();
 }
 
 function exportAllToExcel() {
