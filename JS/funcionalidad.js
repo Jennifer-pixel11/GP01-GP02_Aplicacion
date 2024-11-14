@@ -1,47 +1,69 @@
 // Objeto para almacenar los saldos y movimientos de cada cuenta
-const cuentas = {
-    "Inventario": { 
+let cuentas = {
+    "Inventario": {
         codigoCuenta: "1109",
-        saldo: 0, 
+        saldo: 0,
         movimientos: []  // Arreglo para almacenar los movimientos de la cuenta
     },
-    "Caja": { 
+    "Caja": {
         codigoCuenta: "1101",
-        saldo: 0, 
+        saldo: 0,
         movimientos: []
     },
-    "Clientes": { 
+    "Clientes": {
         codigoCuenta: "1103",
-        saldo: 0, 
+        saldo: 0,
         movimientos: []
     },
-    "Proveedores": { 
+    "Proveedores": {
         codigoCuenta: "2101",
-        saldo: 0, 
+        saldo: 0,
         movimientos: []
     },
-    "Gastos": { 
+    "Gastos": {
         codigoCuenta: "4101",
-        saldo: 0, 
+        saldo: 0,
         movimientos: []
     },
-    "Ingresos": { 
+    "Ingresos": {
         codigoCuenta: "5101",
-        saldo: 0, 
+        saldo: 0,
         movimientos: []
     },
-    "IvaDebito": { 
+    "IvaDebito": {
         codigoCuenta: "2106",
-        saldo: 0, 
+        saldo: 0,
         movimientos: []
     },  // Cuenta para el IVA generado
-    "IvaCredito": { 
+    "IvaCredito": {
         codigoCuenta: "1106",
-        saldo: 0, 
+        saldo: 0,
         movimientos: []
     } // Cuenta para el IVA por Pagar
 };
 
+// Usar window.onload para llamar a loadData cuando la página se cargue
+window.onload = function() {
+    loadData();  // Llamar a la función loadData para cargar los datos de localStorage
+};
+
+// Función para cargar todas las estructuras desde el localStorage al recargar la página
+function loadData() {
+    // Cargar las cuentas desde el localStorage
+    loadCuentasFromLocalStorage();
+    
+    // Cargar las ventas desde el localStorage
+    loadSalesFromLocalStorage();
+    
+    // Cargar las compras desde el localStorage
+    loadPurchasesFromLocalStorage();
+    
+    // Cargar las entradas del diario desde el localStorage (si tienes esta funcionalidad)
+    loadDiaryFromLocalStorage();
+    
+    // Actualizar la tabla del Libro Mayor
+    updateMayorTable();
+}
 
 const movimientos = [];
 
@@ -49,8 +71,10 @@ const movimientos = [];
 function addNewAccount() {
     const newAccount = prompt("Ingrese el nombre de la nueva cuenta:");
     if (newAccount && !cuentas[newAccount]) {
-        cuentas[newAccount] = { saldo: 0,  
-            movimientos: [] };
+        cuentas[newAccount] = {
+            saldo: 0,
+            movimientos: []
+        };
         const cuentaSelect = document.getElementById("cuenta");
         const option = document.createElement("option");
         option.value = newAccount;
@@ -71,76 +95,76 @@ let gisInited = false;
 
 // Cargar las bibliotecas de la API de Google
 function gapiLoaded() {
-  gapi.load('client', initializeGapiClient);
+    gapi.load('client', initializeGapiClient);
 }
 
 // Inicializar el cliente de la API de Google
 async function initializeGapiClient() {
-  await gapi.client.init({
-    apiKey: API_KEY,
-    discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
-  });
-  gapiInited = true;
+    await gapi.client.init({
+        apiKey: API_KEY,
+        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
+    });
+    gapiInited = true;
 }
 
 // Cargar el script para autenticación
 function gisLoaded() {
-  tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: CLIENT_ID,
-    scope: SCOPES,
-    callback: '', // Manejado por handleAuthClick
-  });
-  gisInited = true;
+    tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: '', // Manejado por handleAuthClick
+    });
+    gisInited = true;
 }
 
 // Autenticar y obtener el token de acceso
 function handleAuthClick() {
-  tokenClient.callback = async (resp) => {
-    if (resp.error) {
-      console.error(resp.error);
-      return;
-    }
-    await uploadFile();
-  };
+    tokenClient.callback = async (resp) => {
+        if (resp.error) {
+            console.error(resp.error);
+            return;
+        }
+        await uploadFile();
+    };
 
-  if (gapi.client.getToken() === null) {
-    tokenClient.requestAccessToken({ prompt: 'consent' });
-  } else {
-    tokenClient.requestAccessToken({ prompt: '' });
-  }
+    if (gapi.client.getToken() === null) {
+        tokenClient.requestAccessToken({ prompt: 'consent' });
+    } else {
+        tokenClient.requestAccessToken({ prompt: '' });
+    }
 }
 
 // Función para cargar el archivo a Google Drive
 async function uploadFile() {
-  const fileInput = document.getElementById('formFile');
-  const file = fileInput.files[0];
+    const fileInput = document.getElementById('formFile');
+    const file = fileInput.files[0];
 
-  if (!file) {
-    alert("Selecciona un archivo primero.");
-    return;
-  }
+    if (!file) {
+        alert("Selecciona un archivo primero.");
+        return;
+    }
 
-  const metadata = {
-    name: file.name,
-    mimeType: file.type
-  };
+    const metadata = {
+        name: file.name,
+        mimeType: file.type
+    };
 
-  const form = new FormData();
-  form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-  form.append('file', file);
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+    form.append('file', file);
 
-  try {
-    const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
-      method: 'POST',
-      headers: new Headers({ 'Authorization': 'Bearer ' + gapi.client.getToken().access_token }),
-      body: form
-    });
-    const result = await response.json();
-    alert("Archivo subido con éxito!!");
-  } catch (error) {
-    console.error('Error al subir el archivo:', error);
-    alert('Error al subir el archivo');
-  }
+    try {
+        const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
+            method: 'POST',
+            headers: new Headers({ 'Authorization': 'Bearer ' + gapi.client.getToken().access_token }),
+            body: form
+        });
+        const result = await response.json();
+        alert("Archivo subido con éxito!!");
+    } catch (error) {
+        console.error('Error al subir el archivo:', error);
+        alert('Error al subir el archivo');
+    }
 }
 
 // Manejar el clic en el botón de subir
@@ -291,23 +315,23 @@ function addSalesEntry(event) {
     const fechaVenta = document.getElementById("fechaVenta").value;
     const clienteVenta = document.getElementById("clienteVenta").value;
     const numeroDocumentoVenta = document.getElementById('numeroDocumentoVenta').value;  // Nuevo campo
-    const montoVenta = parseFloat(document.getElementById("montoVenta").value) || 0;
-    const formaPagoVenta = document.getElementById('formaPagoVenta').value; 
-    const tipoDocumentoVenta = document.getElementById('tipoDocumentoVenta').value;  
-    
+    let montoVenta = parseFloat(document.getElementById("montoVenta").value) || 0;
+    const formaPagoVenta = document.getElementById('formaPagoVenta').value;
+    const tipoDocumentoVenta = document.getElementById('tipoDocumentoVenta').value;
+
 
     // Inicializar variables de IVA y monto total
-    let subtotalVenta = montoVenta/1.13;
-    let ivaLibro =0;
+    let subtotalVenta = montoVenta / 1.13;
+    let ivaLibro = 0;
     ivaLibro *= subtotalVenta;
-    let ivaVenta =0;
-    if(tipoDocumentoVenta === "CCF"){
-        ivaVenta = subtotalVenta*0.13;
+    let ivaVenta = 0;
+    if (tipoDocumentoVenta === "CCF") {
+        ivaVenta = subtotalVenta * 0.13;
     }
     let montoTotalVenta = montoVenta;
-    
 
-    ivaLibro =  montoVenta - subtotalVenta;
+
+    ivaLibro = montoVenta - subtotalVenta;
     // Formatear la fecha a dd/MM/yyyy
     const ftdFechaVenta = formatDateToDDMMYYYY(fechaVenta);
 
@@ -316,7 +340,7 @@ function addSalesEntry(event) {
     newRow.insertCell(0).innerText = ftdFechaVenta;
     newRow.insertCell(1).innerText = clienteVenta;
     newRow.insertCell(2).innerText = numeroDocumentoVenta;
-    newRow.insertCell(3).innerText = montoVenta;
+    newRow.insertCell(3).innerText = montoVenta.toFixed(2);
     newRow.insertCell(4).innerText = formaPagoVenta;
     newRow.insertCell(5).innerText = tipoDocumentoVenta;
     newRow.insertCell(6).innerText = ivaVenta.toFixed(2);
@@ -332,116 +356,116 @@ function addSalesEntry(event) {
     };
     deleteCell.appendChild(deleteButton);
 
-   // Lógica para afectar las cuentas según la forma de pago y el tipo de documento
-   if (tipoDocumentoVenta === "Factura") {
-    // Si es una Factura (sin IVA)
-    if (formaPagoVenta === "Contado") {
-        // Incrementar Caja
-        cuentas["Caja"].saldo += montoVenta;
-        cuentas["Caja"].movimientos.push({
-            fecha: ftdFechaVenta,
-            debe: montoVenta,
-            haber: 0
-        });
+    // Lógica para afectar las cuentas según la forma de pago y el tipo de documento
+    if (tipoDocumentoVenta === "Factura") {
+        // Si es una Factura (sin IVA)
+        if (formaPagoVenta === "Contado") {
+            // Incrementar Caja
+            cuentas["Caja"].saldo += montoVenta;
+            cuentas["Caja"].movimientos.push({
+                fecha: ftdFechaVenta,
+                debe: montoVenta,
+                haber: 0
+            });
 
-        // Decrementar Inventario por la venta
-        cuentas["Inventario"].saldo -= subtotalVenta;
-        cuentas["Inventario"].movimientos.push({
-            fecha: ftdFechaVenta,
-            debe: 0,
-            haber: subtotalVenta
-        });
+            // Decrementar Inventario por la venta
+            cuentas["Inventario"].saldo -= subtotalVenta;
+            cuentas["Inventario"].movimientos.push({
+                fecha: ftdFechaVenta,
+                debe: 0,
+                haber: subtotalVenta
+            });
 
-        // Incrementar IVA por Pagar
-        cuentas["IvaDebito"].saldo += ivaLibro;
-        cuentas["IvaDebito"].movimientos.push({
-            fecha: ftdFechaVenta,
-            debe: ivaLibro,
-            haber: 0
-        });
-    } else if (formaPagoVenta === "Credito") {
-        // Incrementar Clientes
-        cuentas["Clientes"].saldo += montoVenta;
-        cuentas["Clientes"].movimientos.push({
-            fecha: ftdFechaVenta,
-            debe: montoVenta,
-            haber: 0
-        });
+            // Incrementar IVA por Pagar
+            cuentas["IvaDebito"].saldo += ivaLibro;
+            cuentas["IvaDebito"].movimientos.push({
+                fecha: ftdFechaVenta,
+                debe: ivaLibro,
+                haber: 0
+            });
+        } else if (formaPagoVenta === "Credito") {
+            // Incrementar Clientes
+            cuentas["Clientes"].saldo += montoVenta;
+            cuentas["Clientes"].movimientos.push({
+                fecha: ftdFechaVenta,
+                debe: montoVenta,
+                haber: 0
+            });
 
-        // Decrementar Inventario por la venta
-        cuentas["Inventario"].saldo -= subtotalVenta;
-        cuentas["Inventario"].movimientos.push({
-            fecha: ftdFechaVenta,
-            debe: 0,
-            haber: subtotalVenta
-        });
+            // Decrementar Inventario por la venta
+            cuentas["Inventario"].saldo -= subtotalVenta;
+            cuentas["Inventario"].movimientos.push({
+                fecha: ftdFechaVenta,
+                debe: 0,
+                haber: subtotalVenta
+            });
 
-        // Incrementar IVA por Pagar
-        cuentas["IvaDebito"].saldo += ivaLibro;
-        cuentas["IvaDebito"].movimientos.push({
-            fecha: ftdFechaVenta,
-            debe: ivaLibro,
-            haber: 0
-        });
+            // Incrementar IVA por Pagar
+            cuentas["IvaDebito"].saldo += ivaLibro;
+            cuentas["IvaDebito"].movimientos.push({
+                fecha: ftdFechaVenta,
+                debe: ivaLibro,
+                haber: 0
+            });
+        }
+    } else if (tipoDocumentoVenta === "CCF") {
+        // Si es CCF (Con IVA)
+        if (formaPagoVenta === "Contado") {
+            // Incrementar Caja
+            cuentas["Caja"].saldo += montoTotalVenta;
+            cuentas["Caja"].movimientos.push({
+                fecha: ftdFechaVenta,
+                debe: montoTotalVenta,
+                haber: 0
+            });
+
+            // Decrementar Inventario por la venta
+            cuentas["Inventario"].saldo -= subtotalVenta;
+            cuentas["Inventario"].movimientos.push({
+                fecha: ftdFechaVenta,
+                debe: 0,
+                haber: subtotalVenta
+            });
+
+            // Incrementar IVA por Pagar
+            cuentas["IvaDebito"].saldo += ivaVenta;
+            cuentas["IvaDebito"].movimientos.push({
+                fecha: ftdFechaVenta,
+                debe: ivaVenta,
+                haber: 0
+            });
+        } else if (formaPagoVenta === "Credito") {
+            // Incrementar Clientes
+            cuentas["Clientes"].saldo += montoTotalVenta;
+            cuentas["Clientes"].movimientos.push({
+                fecha: ftdFechaVenta,
+                debe: montoTotalVenta,
+                haber: 0
+            });
+
+            // Decrementar Inventario por la venta
+            cuentas["Inventario"].saldo -= subtotalVenta;
+            cuentas["Inventario"].movimientos.push({
+                fecha: ftdFechaVenta,
+                debe: 0,
+                haber: subtotalVenta
+            });
+
+            // Incrementar IVA por Pagar
+            cuentas["IvaDebito"].saldo += ivaVenta;
+            cuentas["IvaDebito"].movimientos.push({
+                fecha: ftdFechaVenta,
+                debe: ivaVenta,
+                haber: 0
+            });
+        }
     }
-} else if (tipoDocumentoVenta === "CCF") {
-    // Si es CCF (Con IVA)
-    if (formaPagoVenta === "Contado") {
-        // Incrementar Caja
-        cuentas["Caja"].saldo += montoTotalVenta;
-        cuentas["Caja"].movimientos.push({
-            fecha: ftdFechaVenta,
-            debe: montoTotalVenta,
-            haber: 0
-        });
 
-        // Decrementar Inventario por la venta
-        cuentas["Inventario"].saldo -= subtotalVenta;
-        cuentas["Inventario"].movimientos.push({
-            fecha: ftdFechaVenta,
-            debe: 0,
-            haber: subtotalVenta
-        });
-
-        // Incrementar IVA por Pagar
-        cuentas["IvaDebito"].saldo += ivaVenta;
-        cuentas["IvaDebito"].movimientos.push({
-            fecha: ftdFechaVenta,
-            debe: ivaVenta,
-            haber: 0
-        });
-    } else if (formaPagoVenta === "Credito") {
-        // Incrementar Clientes
-        cuentas["Clientes"].saldo += montoTotalVenta;
-        cuentas["Clientes"].movimientos.push({
-            fecha: ftdFechaVenta,
-            debe: montoTotalVenta,
-            haber: 0
-        });
-
-        // Decrementar Inventario por la venta
-        cuentas["Inventario"].saldo -= subtotalVenta;
-        cuentas["Inventario"].movimientos.push({
-            fecha: ftdFechaVenta,
-            debe: 0,
-            haber: subtotalVenta
-        });
-
-        // Incrementar IVA por Pagar
-        cuentas["IvaDebito"].saldo += ivaVenta;
-        cuentas["IvaDebito"].movimientos.push({
-            fecha: ftdFechaVenta,
-            debe: ivaVenta,
-            haber: 0
-        });
-    }
-}
-
-// Actualiza la tabla mayor
-updateMayorTable();
-saveSalesToLocalStorage();
-saveCuentasToLocalStorage();
-document.getElementById("salesForm").reset();
+    // Actualiza la tabla mayor
+    updateMayorTable();
+    saveSalesToLocalStorage();
+    saveCuentasToLocalStorage();
+    document.getElementById("salesForm").reset();
 }
 
 // Función para agregar una entrada de compra
@@ -450,15 +474,15 @@ function addPurchaseEntry(event) {
     const fechaCompra = document.getElementById("fechaCompra").value;
     const proveedorCompra = document.getElementById("proveedorCompra").value;
     const numeroDocumentoCompra = document.getElementById('numeroDocumentoCompra').value;  // Nuevo campo
-    const montoCompra = parseFloat(document.getElementById("montoCompra").value) || 0;
+    let montoCompra = parseFloat(document.getElementById("montoCompra").value) || 0;
     const formaPagoCompra = document.getElementById('formaPagoCompra').value;
     const tipoDocumentoCompra = document.getElementById('tipoDocumentoCompra').value;
 
     // Inicializar variables de IVA y monto total
-    let subtotalCompra = montoCompra/1.13;
-    let ivaCompra =0;
-    if(tipoDocumentoCompra === "CCF"){
-        ivaCompra = subtotalCompra*0.13;
+    let subtotalCompra = montoCompra / 1.13;
+    let ivaCompra = 0;
+    if (tipoDocumentoCompra === "CCF") {
+        ivaCompra = subtotalCompra * 0.13;
     }
     let montoTotalCompra = montoCompra;
 
@@ -481,7 +505,7 @@ function addPurchaseEntry(event) {
     deleteButton.innerText = "Eliminar";
     deleteButton.className = "btn btn-danger btn-sm";
     deleteButton.onclick = function () {
-        deleteSalesEntry(newRow, montoCompra, tipoDocumentoCompra, formaPagoCompra, ivaCompra); // Llama a la función de eliminación de compras
+        deletePurchaseEntry(newRow, montoCompra, tipoDocumentoCompra, formaPagoCompra, ivaCompra); // Llama a la función de eliminación de compras
     };
     deleteCell.appendChild(deleteButton);
 
@@ -496,7 +520,7 @@ function addPurchaseEntry(event) {
                 debe: 0,
                 haber: montoCompra
             });
-    
+
             // Incrementar Inventario
             cuentas["Inventario"].saldo += subtotalCompra;
             cuentas["Inventario"].movimientos.push({
@@ -512,7 +536,7 @@ function addPurchaseEntry(event) {
                 debe: 0,
                 haber: montoTotalCompra
             });
-    
+
             // Incrementar Inventario
             cuentas["Inventario"].saldo += subtotalCompra;
             cuentas["Inventario"].movimientos.push({
@@ -530,7 +554,7 @@ function addPurchaseEntry(event) {
                 debe: 0,
                 haber: montoTotalCompra
             });
-    
+
             // Incrementar Inventario
             cuentas["Inventario"].saldo += subtotalCompra;
             cuentas["Inventario"].movimientos.push({
@@ -538,7 +562,7 @@ function addPurchaseEntry(event) {
                 debe: subtotalCompra,
                 haber: 0
             });
-    
+
             // Incrementar IVA
             cuentas["IvaCredito"].saldo += ivaCompra;
             cuentas["IvaCredito"].movimientos.push({
@@ -554,7 +578,7 @@ function addPurchaseEntry(event) {
                 debe: 0,
                 haber: montoTotalCompra
             });
-    
+
             // Incrementar Inventario
             cuentas["Inventario"].saldo += subtotalCompra;
             cuentas["Inventario"].movimientos.push({
@@ -562,7 +586,7 @@ function addPurchaseEntry(event) {
                 debe: subtotalCompra,
                 haber: 0
             });
-    
+
             // Incrementar IVA
             cuentas["IvaCredito"].saldo += ivaCompra;
             cuentas["IvaCredito"].movimientos.push({
@@ -582,72 +606,156 @@ function addPurchaseEntry(event) {
 // Función para eliminar una entrada de venta
 function deleteSalesEntry(row, monto, tipoDocumentoVenta, formaPagoVenta, ivaVenta) {
     const table = document.getElementById("salesTable").getElementsByTagName("tbody")[0];
-    table.removeChild(row);
+    table.removeChild(row);  // Eliminar la fila de la tabla de ventas
 
-    // Lógica para afectar las cuentas según la forma de pago y el tipo de documento
+    // Lógica para revertir las cuentas según la forma de pago y el tipo de documento
     if (tipoDocumentoVenta === "Factura") {
         // Si es una Factura (sin IVA)
         if (formaPagoVenta === "Contado") {
-            cuentas["Caja"].saldo -= monto;  // Decrementar Caja
-            cuentas["Inventario"].saldo += monto;  // Incrementar Inventario por la venta
+            // Revertir el incremento en Caja
+            cuentas["Caja"].saldo -= monto;
+            // Revertir la disminución en Inventario
+            cuentas["Inventario"].saldo += monto / 1.13;  // Subir el monto original, sin IVA
+            // Revertir el incremento en IVA por Pagar
+            cuentas["IvaDebito"].saldo -= ivaVenta;
+            cuentas["Caja"].movimientos.pop();  // Eliminar el último movimiento en Caja
+            cuentas["Inventario"].movimientos.pop();  // Eliminar el último movimiento en Inventario
+            cuentas["IvaDebito"].movimientos.pop();  // Eliminar el último movimiento en IVA
         } else if (formaPagoVenta === "Credito") {
-            cuentas["Clientes"].saldo -= monto;  // Decrementar Clientes
-            cuentas["Inventario"].saldo += monto;  // Incrementar Inventario por la venta
+            // Revertir el incremento en Clientes
+            cuentas["Clientes"].saldo -= monto;
+            // Revertir la disminución en Inventario
+            cuentas["Inventario"].saldo += monto / 1.13;
+            cuentas["Clientes"].movimientos.pop();  // Eliminar el último movimiento en Clientes
+            cuentas["Inventario"].movimientos.pop();  // Eliminar el último movimiento en Inventario
         }
     } else if (tipoDocumentoVenta === "CCF") {
         // Si es CCF (Con IVA)
         if (formaPagoVenta === "Contado") {
-            cuentas["Caja"].saldo -= monto;  // Decrementar Caja
-            cuentas["Inventario"].saldo += monto;  // Incrementar Inventario por la venta
-            cuentas["IvaCredito"].saldo -= ivaVenta;  // Decrementar IVA por Pagar
+            // Revertir el incremento en Caja
+            cuentas["Caja"].saldo -= monto;
+            // Revertir la disminución en Inventario
+            cuentas["Inventario"].saldo += monto / 1.13;
+            // Revertir el incremento en IVA por Pagar
+            cuentas["IvaDebito"].saldo -= ivaVenta;
+            cuentas["Caja"].movimientos.pop();  // Eliminar el último movimiento en Caja
+            cuentas["Inventario"].movimientos.pop();  // Eliminar el último movimiento en Inventario
+            cuentas["IvaDebito"].movimientos.pop();  // Eliminar el último movimiento en IVA
         } else if (formaPagoVenta === "Credito") {
-            cuentas["Clientes"].saldo -= monto;  // Decrementar Clientes
-            cuentas["Inventario"].saldo += monto;  // Incrementar Inventario por la venta
-            cuentas["IvaCredito"].saldo -= ivaVenta;  // Decrementar IVA por Pagar
+            // Revertir el incremento en Clientes
+            cuentas["Clientes"].saldo -= monto;
+            // Revertir la disminución en Inventario
+            cuentas["Inventario"].saldo += monto / 1.13;
+            // Revertir el incremento en IVA por Pagar
+            cuentas["IvaDebito"].saldo -= ivaVenta;
+            cuentas["Clientes"].movimientos.pop();  // Eliminar el último movimiento en Clientes
+            cuentas["Inventario"].movimientos.pop();  // Eliminar el último movimiento en Inventario
+            cuentas["IvaDebito"].movimientos.pop();  // Eliminar el último movimiento en IVA
         }
     }
 
     // Actualizar el Libro Mayor y el almacenamiento local
-    updateMayorTable();
-    saveCuentasToLocalStorage();
-    saveSalesToLocalStorage();
+    updateMayorTable();  // Actualiza la tabla del Libro Mayor
+    saveCuentasToLocalStorage();  // Guarda los cambios de cuentas en el almacenamiento local
+    saveSalesToLocalStorage();  // Guarda las ventas restantes en el almacenamiento local
 }
 
 // Función para eliminar una entrada de compra
 function deletePurchaseEntry(row, monto, tipoDocumentoCompra, formaPagoCompra, ivaCompra) {
     const table = document.getElementById("purchaseTable").getElementsByTagName("tbody")[0];
-    table.removeChild(row);
+    table.removeChild(row);  // Eliminar la fila de la tabla de compras
 
-    // Lógica para afectar las cuentas según la forma de pago y el tipo de documento
+    // Lógica para revertir las cuentas según la forma de pago y el tipo de documento
     if (tipoDocumentoCompra === "Factura") {
         // Si es una Factura (sin IVA)
         if (formaPagoCompra === "Contado") {
-            cuentas["Caja"].saldo += monto;  // Incrementar Caja
-            cuentas["Inventario"].saldo -= monto;  // Decrementar Inventario por la compra
+            // Revertir el decremento en Caja
+            cuentas["Caja"].saldo += monto;
+            // Revertir la incremento en Inventario
+            cuentas["Inventario"].saldo -= monto / 1.13;  // Subir el monto original sin IVA
+            cuentas["Caja"].movimientos.pop();  // Eliminar el último movimiento en Caja
+            cuentas["Inventario"].movimientos.pop();  // Eliminar el último movimiento en Inventario
         } else if (formaPagoCompra === "Credito") {
-            cuentas["Proveedores"].saldo -= monto;  // Decrementar Proveedores
-            cuentas["Inventario"].saldo -= monto;  // Decrementar Inventario por la compra
+            // Revertir el incremento en Proveedores
+            cuentas["Proveedores"].saldo -= monto;
+            // Revertir la incremento en Inventario
+            cuentas["Inventario"].saldo -= monto / 1.13;  // Subir el monto original sin IVA
+            cuentas["Proveedores"].movimientos.pop();  // Eliminar el último movimiento en Proveedores
+            cuentas["Inventario"].movimientos.pop();  // Eliminar el último movimiento en Inventario
         }
     } else if (tipoDocumentoCompra === "CCF") {
         // Si es CCF (Con IVA)
         if (formaPagoCompra === "Contado") {
-            cuentas["Caja"].saldo += monto;  // Incrementar Caja
-            cuentas["Inventario"].saldo -= monto;  // Decrementar Inventario por la compra
-            cuentas["IvaCredito"].saldo -= ivaCompra;  // Decrementar IVA por Pagar
+            // Revertir el decremento en Caja
+            cuentas["Caja"].saldo += monto;
+            // Revertir la incremento en Inventario
+            cuentas["Inventario"].saldo -= monto / 1.13;  // Subir el monto original sin IVA
+            // Revertir el decremento en IVA por Pagar
+            cuentas["IvaCredito"].saldo -= ivaCompra;
+            cuentas["Caja"].movimientos.pop();  // Eliminar el último movimiento en Caja
+            cuentas["Inventario"].movimientos.pop();  // Eliminar el último movimiento en Inventario
+            cuentas["IvaCredito"].movimientos.pop();  // Eliminar el último movimiento en IVA
         } else if (formaPagoCompra === "Credito") {
-            cuentas["Proveedores"].saldo -= monto;  // Decrementar Proveedores
-            cuentas["Inventario"].saldo -= monto;  // Decrementar Inventario por la compra
-            cuentas["IvaCredito"].saldo -= ivaCompra;  // Decrementar IVA por Pagar
+            // Revertir el incremento en Proveedores
+            cuentas["Proveedores"].saldo -= monto;
+            // Revertir la incremento en Inventario
+            cuentas["Inventario"].saldo -= monto / 1.13;  // Subir el monto original sin IVA
+            // Revertir el decremento en IVA por Pagar
+            cuentas["IvaCredito"].saldo -= ivaCompra;
+            cuentas["Proveedores"].movimientos.pop();  // Eliminar el último movimiento en Proveedores
+            cuentas["Inventario"].movimientos.pop();  // Eliminar el último movimiento en Inventario
+            cuentas["IvaCredito"].movimientos.pop();  // Eliminar el último movimiento en IVA
         }
     }
 
     // Actualizar el Libro Mayor y el almacenamiento local
-    updateMayorTable();
-    saveCuentasToLocalStorage();
-    savePurchaseToLocalStorage();
+    updateMayorTable();  // Actualiza la tabla del Libro Mayor
+    saveCuentasToLocalStorage();  // Guarda los cambios de cuentas en el almacenamiento local
+    savePurchaseToLocalStorage();  // Guarda las compras restantes en el almacenamiento local
 }
 
-///// PERSISTENCIA EN LOCAL STORAGE 
+
+// Función para cargar las ventas desde el localStorage
+function loadSalesFromLocalStorage() {
+    const salesData = JSON.parse(localStorage.getItem('salesData'));
+    if (salesData && Array.isArray(salesData)) {
+        const table = document.getElementById("salesTable").getElementsByTagName("tbody")[0];
+        
+        salesData.forEach(({ fechaVenta, clienteVenta, numeroDocumentoVenta, montoVenta, tipoDocumentoVenta, formaPagoVenta, ivaVenta }) => {
+            // Creamos una nueva fila
+            const newRow = table.insertRow();
+            newRow.insertCell(0).innerText = fechaVenta;
+            newRow.insertCell(1).innerText = clienteVenta;
+            newRow.insertCell(2).innerText = numeroDocumentoVenta;
+            newRow.insertCell(3).innerText = montoVenta;
+            newRow.insertCell(4).innerText = formaPagoVenta;
+            newRow.insertCell(5).innerText = tipoDocumentoVenta;
+            newRow.insertCell(6).innerText = ivaVenta;
+
+            // Crear la celda para el botón de eliminar
+            const deleteCell = newRow.insertCell(7);
+            const deleteButton = document.createElement("button");
+            deleteButton.innerText = "Eliminar";
+            deleteButton.className = "btn btn-danger btn-sm";
+            deleteButton.onclick = function () {
+                // Llamamos a la función de eliminación de ventas
+                deleteSalesEntry(newRow, montoVenta, tipoDocumentoVenta, formaPagoVenta, ivaVenta);
+            };
+            deleteCell.appendChild(deleteButton);
+        });
+        // Actualiza la tabla mayor
+        updateMayorTable();
+    }
+}
+
+
+
+
+
+
+
+
+// PERSISTENCIA
 // Función para guardar las entradas del Diario en el localStorage
 function saveDiaryToLocalStorage() {
     const diaryData = [];
@@ -663,7 +771,6 @@ function saveDiaryToLocalStorage() {
     });
     localStorage.setItem('diaryData', JSON.stringify(diaryData));
 }
-
 // Función para guardar las ventas en el localStorage
 function saveSalesToLocalStorage() {
     const salesData = [];
@@ -671,16 +778,16 @@ function saveSalesToLocalStorage() {
         const rowData = {
             fechaVenta: row.cells[0].innerText,
             clienteVenta: row.cells[1].innerText,
-            montoVenta: parseFloat(row.cells[2].innerText) || 0,
-            tipoDocumentoVenta: row.cells[3].innerText,  // Añadir tipo de documento
-            ivaVenta: parseFloat(row.cells[4].innerText) || 0,  // Añadir IVA de la venta
-            formaPagoVenta: row.cells[5].innerText  // Añadir forma de pago
+            numeroDocumentoVenta: row.cells[2].innerText,
+            montoVenta: parseFloat(row.cells[3].innerText) || 0,
+            tipoDocumentoVenta: row.cells[5].innerText,  // Añadir tipo de documento
+            formaPagoVenta: row.cells[4].innerText,  // Añadir forma de pago
+            ivaVenta: parseFloat(row.cells[6].innerText) || 0,  // Añadir IVA de la venta
         };
         salesData.push(rowData);
     });
     localStorage.setItem('salesData', JSON.stringify(salesData));
 }
-
 // Función para guardar las compras en el localStorage
 function savePurchaseToLocalStorage() {
     const purchaseData = [];
@@ -688,45 +795,42 @@ function savePurchaseToLocalStorage() {
         const rowData = {
             fechaCompra: row.cells[0].innerText,
             proveedorCompra: row.cells[1].innerText,
-            montoCompra: parseFloat(row.cells[2].innerText) || 0,
-            tipoDocumentoCompra: row.cells[3].innerText,  // Añadir tipo de documento
-            ivaCompra: parseFloat(row.cells[4].innerText) || 0,  // Añadir IVA de la compra
-            formaPagoCompra: row.cells[5].innerText  // Añadir forma de pago
+            numeroDocumentoCompra: row.cells[2].innerText, // Nuevo campo
+            montoCompra: parseFloat(row.cells[3].innerText) || 0,
+            formaPagoCompra: row.cells[4].innerText,
+            tipoDocumentoCompra: row.cells[5].innerText, // Tipo de documento
+            ivaCompra: parseFloat(row.cells[6].innerText) || 0, // IVA de la compra
         };
         purchaseData.push(rowData);
     });
+    // Guardar los datos en el localStorage
     localStorage.setItem('purchaseData', JSON.stringify(purchaseData));
 }
 
-function saveCuentasToLocalStorage() {
-    localStorage.setItem('cuentas', JSON.stringify(cuentas));
-}
 
-// Función para cargar las ventas desde el localStorage
-function loadSalesFromLocalStorage() {
-    const salesData = JSON.parse(localStorage.getItem('salesData'));
-    if (salesData && Array.isArray(salesData)) {
-        const table = document.getElementById("salesTable").getElementsByTagName("tbody")[0];
-        salesData.forEach(({ fechaVenta, clienteVenta, montoVenta, tipoDocumentoVenta, ivaVenta, formaPagoVenta }) => {
+// Función para cargar las entradas del diario desde el localStorage
+function loadDiaryFromLocalStorage() {
+    const diaryData = JSON.parse(localStorage.getItem('diaryData'));
+    if (diaryData && Array.isArray(diaryData)) {
+        const table = document.getElementById("diaryTable").getElementsByTagName("tbody")[0];
+        diaryData.forEach(({ fecha, codigoCuenta, cuenta, debe, haber }) => {
             const newRow = table.insertRow();
-            newRow.insertCell(0).innerText = fechaVenta;
-            newRow.insertCell(1).innerText = clienteVenta;
-            newRow.insertCell(2).innerText = montoVenta;
-            newRow.insertCell(3).innerText = tipoDocumentoVenta; // Mostrar tipo de documento
-            newRow.insertCell(4).innerText = ivaVenta;  // Mostrar IVA
-            newRow.insertCell(5).innerText = formaPagoVenta;  // Mostrar forma de pago
+            newRow.insertCell(0).innerText = fecha;
+            newRow.insertCell(1).innerText = codigoCuenta;
+            newRow.insertCell(2).innerText = cuenta;
+            newRow.insertCell(3).innerText = debe;
+            newRow.insertCell(4).innerText = haber;
 
             // Agregar botón "Eliminar"
-            const deleteCell = newRow.insertCell(6);
+            const deleteCell = newRow.insertCell(5);
             const deleteButton = document.createElement("button");
             deleteButton.innerText = "Eliminar";
             deleteButton.className = "btn btn-danger btn-sm";
             deleteButton.onclick = function () {
-                deleteSalesEntry(newRow, parseFloat(montoVenta), tipoDocumentoVenta, formaPagoVenta, ivaVenta); // Llama a la función de eliminación de ventas
+                deleteDiaryEntry(newRow, debe, haber); // Llama a la función de eliminación del diario
             };
             deleteCell.appendChild(deleteButton);
         });
-        updateMayorTable(); // Actualiza la tabla del Libro Mayor
     }
 }
 
@@ -735,28 +839,47 @@ function loadPurchasesFromLocalStorage() {
     const purchaseData = JSON.parse(localStorage.getItem('purchaseData'));
     if (purchaseData && Array.isArray(purchaseData)) {
         const table = document.getElementById("purchaseTable").getElementsByTagName("tbody")[0];
-        purchaseData.forEach(({ fechaCompra, proveedorCompra, montoCompra, tipoDocumentoCompra, ivaCompra, formaPagoCompra }) => {
+        
+        // Cargar cada compra desde el localStorage
+        purchaseData.forEach(({ fechaCompra, proveedorCompra, numeroDocumentoCompra, montoCompra, tipoDocumentoCompra, ivaCompra, formaPagoCompra }) => {
+            // Insertar una nueva fila en la tabla
             const newRow = table.insertRow();
             newRow.insertCell(0).innerText = fechaCompra;
             newRow.insertCell(1).innerText = proveedorCompra;
-            newRow.insertCell(2).innerText = montoCompra;
-            newRow.insertCell(3).innerText = tipoDocumentoCompra; // Mostrar tipo de documento
-            newRow.insertCell(4).innerText = ivaCompra;  // Mostrar IVA
-            newRow.insertCell(5).innerText = formaPagoCompra;  // Mostrar forma de pago
+            newRow.insertCell(2).innerText = numeroDocumentoCompra; // Nuevo campo
+            newRow.insertCell(3).innerText = montoCompra;
+            newRow.insertCell(4).innerText = formaPagoCompra;
+            newRow.insertCell(5).innerText = tipoDocumentoCompra; // Tipo de documento
+            newRow.insertCell(6).innerText = ivaCompra; // IVA
 
-            // Agregar botón "Eliminar"
-            const deleteCell = newRow.insertCell(6);
+            // Agregar botón "Eliminar" al final de la fila
+            const deleteCell = newRow.insertCell(7);
             const deleteButton = document.createElement("button");
             deleteButton.innerText = "Eliminar";
             deleteButton.className = "btn btn-danger btn-sm";
             deleteButton.onclick = function () {
-                deletePurchaseEntry(newRow, parseFloat(montoCompra), tipoDocumentoCompra, formaPagoCompra, ivaCompra); // Llama a la función de eliminación de compras
+                deletePurchaseEntry(newRow, montoCompra, tipoDocumentoCompra, formaPagoCompra, ivaCompra); // Llama a la función de eliminación de compras
             };
             deleteCell.appendChild(deleteButton);
         });
-        updateMayorTable(); // Actualiza la tabla del Libro Mayor
+        
+        // Actualiza la tabla del Libro Mayor (si es necesario)
+        updateMayorTable();
     }
 }
+function saveCuentasToLocalStorage() {
+    localStorage.setItem('cuentas', JSON.stringify(cuentas));
+}
+function loadCuentasFromLocalStorage() {
+    const cuentasData = JSON.parse(localStorage.getItem('cuentas'));
+    if (cuentasData) {
+        cuentas = cuentasData;  // Ahora puedes reasignar cuentas sin problemas
+        updateMayorTable();  // Actualizar el libro mayor
+    }
+}
+
+// FIN PERSISTENCIA
+
 
 function exportAllToExcel() {
     const wb = XLSX.utils.book_new();
@@ -831,14 +954,14 @@ function exportAllToExcel() {
     // Extraer los datos de la tabla mayor
     document.querySelectorAll('#mayorTable tbody tr').forEach(row => {
         const cells = row.querySelectorAll('td');
-        
+
         // Si es una fila de saldo final (con cuenta y saldo), agregamos los datos
         if (cells.length === 6 && cells[2].textContent !== "") {
             const codigoCuenta = cells[1].textContent;
             const cuenta = cells[2].textContent;
             const saldo = cells[5].textContent;
-            mayorData.push(["", codigoCuenta ,cuenta, "", "", saldo]);
-        } 
+            mayorData.push(["", codigoCuenta, cuenta, "", "", saldo]);
+        }
         // Si es una fila de movimiento, agregamos la fecha, debe y haber
         else if (cells.length === 6 && cells[0].textContent !== "") {
             const fecha = cells[0].textContent;
@@ -883,7 +1006,7 @@ function exportAllToExcel() {
 
     // Libro de Ventas
     const salesData = [];
-    const salesHeaders = ["Fecha", "Cliente", "No. Documento","Monto","Forma de Pago","Tipo Documento", "IVA"];
+    const salesHeaders = ["Fecha", "Cliente", "No. Documento", "Monto", "Forma de Pago", "Tipo Documento", "IVA"];
     salesData.push(salesHeaders);
     document.querySelectorAll('#salesTable tbody tr').forEach(row => {
         const rowData = Array.from(row.children).map((cell, index) => {
@@ -929,7 +1052,7 @@ function exportAllToExcel() {
 
     // Libro de Compras
     const purchaseData = [];
-    const purchaseHeaders = ["Fecha", "Proveedor", "No. Documento","Monto","Forma de Pago","Tipo Documento", "IVA"];
+    const purchaseHeaders = ["Fecha", "Proveedor", "No. Documento", "Monto", "Forma de Pago", "Tipo Documento", "IVA"];
     purchaseData.push(purchaseHeaders);
     document.querySelectorAll('#purchaseTable tbody tr').forEach(row => {
         const rowData = Array.from(row.children).map((cell, index) => {
@@ -941,7 +1064,7 @@ function exportAllToExcel() {
         }).filter(cell => cell !== null); // Filtra las celdas null
         purchaseData.push(rowData);
     });
-    
+
     const purchaseWorksheet = XLSX.utils.aoa_to_sheet(purchaseData);
 
     // Aplicar estilos para compras
@@ -1008,7 +1131,7 @@ async function exportToPDF() {
         if (canvas.width === 0 || canvas.height === 0) {
             return true; // Si el canvas no tiene dimensiones válidas, consideramos que está vacío
         }
-        
+
         const context = canvas.getContext('2d');
         const pixelData = context.getImageData(0, 0, canvas.width, canvas.height).data;
 
@@ -1025,7 +1148,7 @@ async function exportToPDF() {
     const addTableToPDF = async (tableId, title, x, y) => {
         const table = document.getElementById(tableId);
         const canvas = await html2canvas(table);
-        
+
         // Verifica si la tabla tiene contenido
         if (!isCanvasBlank(canvas)) {
             // Si tiene contenido, añade el título y la tabla
