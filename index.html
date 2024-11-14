@@ -53,22 +53,25 @@
                             <label for="cuenta">Cuenta</label>
                             <select id="cuenta" class="form-control" required>
                                 <option value="" disabled selected>Seleccionar cuenta</option>
-                                <option value="Ventas">Ventas</option>
-                                <option value="Compras">Compras</option>
+                                <option value="Caja">Caja</option>
+                                <option value="Clientes">Clientes</option>
+                                <option value="Inventario">Inventario</option>
+                                <option value="Proveedores">Proveedores</option>
                                 <option value="Gastos">Gastos</option>
                                 <option value="Ingresos">Ingresos</option>
+                                
                             </select>
                             <button type="button" class="btn btn-link" onclick="addNewAccount()">Agregar nueva
                                 cuenta</button>
                         </div>
                         <div class="form-group col-md-3">
-                            <label for="debito">Débito</label>
+                            <label for="debito">Debe</label>
                             <input type="number" class="form-control" id="debito" step="0.01" value="0" required>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group col-md-3">
-                            <label for="credito">Crédito</label>
+                            <label for="credito">Haber</label>
                             <input type="number" class="form-control" id="credito" step="0.01" value="0" required>
                         </div>
                         <div class="form-group col-md-3">
@@ -82,8 +85,8 @@
                             <th>Fecha</th>
                             <th>Código de la cuenta</th>
                             <th>Cuenta</th>
-                            <th>Débito</th>
-                            <th>Crédito</th>
+                            <th>Debe</th>
+                            <th>Haber</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -125,6 +128,29 @@
                             <input type="text" class="form-control" id="clienteVenta" required>
                         </div>
                         <div class="form-group col-md-4">
+                            <label for="numeroDocumentoVenta">Número de Documento</label>
+                            <input type="text" class="form-control" id="numeroDocumentoVenta" required>
+                        </div>
+                        <!-- Campo para seleccionar la forma de pago en el Libro de Ventas -->
+                        <div class="form-group col-md-4">
+                            <label for="formaPagoVenta">Forma de Pago</label>
+                            <select id="formaPagoVenta" class="form-control" required>
+                                <option value="" disabled selected>Seleccionar forma de pago</option>
+                                <option value="Contado">Contado</option>
+                                <option value="Credito">Crédito</option>
+                            </select>
+                        </div>
+                        <!-- Campo para seleccionar el tipo de documento en el Libro de Ventas -->
+                        <div class="form-group col-md-4">
+                            <label for="tipoDocumentoVenta">Tipo de Documento</label>
+                            <select id="tipoDocumentoVenta" class="form-control" required>
+                                <option value="" disabled selected>Seleccionar tipo de documento</option>
+                                <option value="Factura">Factura</option>
+                                <option value="CCF">Comprobante de Credito Fiscal</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group col-md-4">
                             <label for="montoVenta">Monto</label>
                             <input type="number" step="0.01" class="form-control" id="montoVenta" required>
                         </div>
@@ -136,7 +162,11 @@
                         <tr>
                             <th>Fecha</th>
                             <th>Cliente</th>
-                            <th>Monto</th>
+                            <th>Número de Documento</th>
+                            <th>Monto</th> 
+                            <th>Forma de Pago</th>
+                            <th>Tipo de Documento</th> 
+                            <th>IVA</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -161,6 +191,29 @@
                             <input type="text" class="form-control" id="proveedorCompra" required>
                         </div>
                         <div class="form-group col-md-4">
+                            <label for="numeroDocumentoCompra">Número de Documento</label>
+                            <input type="text" class="form-control" id="numeroDocumentoCompra" required>
+                        </div>
+                        <!-- Campo para seleccionar la forma de pago en el Libro de Compras -->
+                        <div class="form-group col-md-4">
+                            <label for="formaPagoCompra">Forma de Pago</label>
+                            <select id="formaPagoCompra" class="form-control" required>
+                                <option value="" disabled selected>Seleccionar forma de pago</option>
+                                <option value="Contado">Contado</option>
+                                <option value="Credito">Crédito</option>
+                            </select>
+                        </div>
+                        <!-- Campo para seleccionar el tipo de documento en el Libro de Compras -->
+                        <div class="form-group col-md-4">
+                            <label for="tipoDocumentoCompra">Tipo de Documento</label>
+                            <select id="tipoDocumentoCompra" class="form-control" required>
+                                <option value="" disabled selected>Seleccionar tipo de documento</option>
+                                <option value="Factura">Factura</option>
+                                <option value="CCF">Comprobante de Credito Fiscal</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group col-md-4">
                             <label for="montoCompra">Monto</label>
                             <input type="number" class="form-control" step="0.01" id="montoCompra" required>
                         </div>
@@ -172,7 +225,11 @@
                         <tr>
                             <th>Fecha</th>
                             <th>Proveedor</th>
-                            <th>Monto</th>
+                            <th>Número de Documento</th>
+                            <th>Monto</th> 
+                            <th>Forma de Pago</th>
+                            <th>Tipo de Documento</th> 
+                            <th>IVA</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
