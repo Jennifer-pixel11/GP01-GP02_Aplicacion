@@ -263,6 +263,22 @@ function addDiaryEntry(event) {
     document.getElementById("diaryForm").reset();
 }
 
+// Cargar cuentas desde el localStorage y actualizar el menú desplegable
+function loadAccountsFromLocalStorage() {
+    const storedCuentas = JSON.parse(localStorage.getItem("cuentas")) || {};
+    cuentas = storedCuentas; // Actualiza el objeto de cuentas con las guardadas en localStorage
+
+    const cuentaSelect = document.getElementById("cuenta");
+    cuentaSelect.innerHTML = '<option value="" disabled selected>Seleccionar cuenta</option>'; // Reinicia el contenido del menú
+
+    for (const cuenta in cuentas) {
+        const option = document.createElement("option");
+        option.value = cuenta;
+        option.text = cuenta;
+        cuentaSelect.add(option);
+    }
+}
+
 function deleteEntry(row, cuenta, debito, credito) {
     // Eliminar la fila de la tabla
     row.remove();
@@ -465,8 +481,62 @@ function addSalesEntry(event) {
     updateMayorTable();
     saveSalesToLocalStorage();
     saveCuentasToLocalStorage();
+    updateDiaryTable(); // Actualizar libro diario después de agregar una compra
     document.getElementById("salesForm").reset();
 }
+
+// Función para actualizar el libro diario con las entradas de ventas y compras, ordenadas por fecha
+function updateDiaryTable() {
+    // Obtener el cuerpo de la tabla del libro diario
+    const diaryTableBody = document.getElementById("diaryTable").getElementsByTagName("tbody")[0];
+    
+    // Limpiar el contenido actual de la tabla
+    diaryTableBody.innerHTML = "";
+
+    // Recopilar todos los movimientos en un array
+    let allMovements = [];
+
+    // Recorrer cada cuenta y extraer sus movimientos
+    Object.keys(cuentas).forEach(cuentaNombre => {
+        const cuenta = cuentas[cuentaNombre];
+        
+        cuenta.movimientos.forEach(movimiento => {
+            // Añadir el nombre y código de la cuenta a cada movimiento para luego mostrarlo en la tabla
+            allMovements.push({
+                fecha: movimiento.fecha,
+                cuentaNombre: cuentaNombre,
+                codigoCuenta: cuenta.codigoCuenta,
+                debe: movimiento.debe,
+                haber: movimiento.haber
+            });
+        });
+    });
+
+    // Ordenar los movimientos por fecha en formato "DD/MM/YYYY"
+    allMovements.sort((a, b) => {
+        const [dayA, monthA, yearA] = a.fecha.split("/").map(Number);
+        const [dayB, monthB, yearB] = b.fecha.split("/").map(Number);
+        const dateA = new Date(yearA, monthA - 1, dayA); // Crear objeto Date para la fecha A
+        const dateB = new Date(yearB, monthB - 1, dayB); // Crear objeto Date para la fecha B
+        return dateA - dateB; // Orden ascendente
+    });
+
+    // Insertar los movimientos ordenados en la tabla del libro diario
+    allMovements.forEach(movimiento => {
+        const newRow = diaryTableBody.insertRow();
+
+        // Añadir columnas a la fila
+        newRow.insertCell(0).innerText = movimiento.fecha;
+        newRow.insertCell(1).innerText = movimiento.cuentaNombre;
+        newRow.insertCell(2).innerText = movimiento.codigoCuenta;
+        newRow.insertCell(3).innerText = movimiento.debe.toFixed(2);
+        newRow.insertCell(4).innerText = movimiento.haber.toFixed(2);
+    });
+
+    // Guardar el contenido actualizado del libro diario en localStorage
+    saveDiaryToLocalStorage();
+}
+
 
 // Función para agregar una entrada de compra
 function addPurchaseEntry(event) {
@@ -600,6 +670,7 @@ function addPurchaseEntry(event) {
     updateMayorTable();
     savePurchaseToLocalStorage();
     saveCuentasToLocalStorage();
+    updateDiaryTable(); // Actualizar libro diario después de agregar una compra
     document.getElementById("purchaseForm").reset();
 }
 
@@ -715,14 +786,25 @@ function deletePurchaseEntry(row, monto, tipoDocumentoCompra, formaPagoCompra, i
 }
 
 
-// Función para cargar las ventas desde el localStorage
+// Función para cargar las ventas desde el localStorage y ordenarlas por fecha
 function loadSalesFromLocalStorage() {
     const salesData = JSON.parse(localStorage.getItem('salesData'));
     if (salesData && Array.isArray(salesData)) {
+        // Ordenar las ventas por fecha en formato DD/MM/YYYY
+        salesData.sort((a, b) => {
+            const [dayA, monthA, yearA] = a.fechaVenta.split("/").map(Number);
+            const [dayB, monthB, yearB] = b.fechaVenta.split("/").map(Number);
+            const dateA = new Date(yearA, monthA - 1, dayA);
+            const dateB = new Date(yearB, monthB - 1, dayB);
+            return dateA - dateB; // Orden ascendente por fecha
+        });
+
+        // Obtener el cuerpo de la tabla
         const table = document.getElementById("salesTable").getElementsByTagName("tbody")[0];
         
+        // Insertar las ventas ordenadas en la tabla
         salesData.forEach(({ fechaVenta, clienteVenta, numeroDocumentoVenta, montoVenta, tipoDocumentoVenta, formaPagoVenta, ivaVenta }) => {
-            // Creamos una nueva fila
+            // Crear una nueva fila
             const newRow = table.insertRow();
             newRow.insertCell(0).innerText = fechaVenta;
             newRow.insertCell(1).innerText = clienteVenta;
@@ -743,16 +825,11 @@ function loadSalesFromLocalStorage() {
             };
             deleteCell.appendChild(deleteButton);
         });
+
         // Actualiza la tabla mayor
         updateMayorTable();
     }
 }
-
-
-
-
-
-
 
 
 // PERSISTENCIA
@@ -788,6 +865,7 @@ function saveSalesToLocalStorage() {
     });
     localStorage.setItem('salesData', JSON.stringify(salesData));
 }
+
 // Función para guardar las compras en el localStorage
 function savePurchaseToLocalStorage() {
     const purchaseData = [];
@@ -807,7 +885,6 @@ function savePurchaseToLocalStorage() {
     localStorage.setItem('purchaseData', JSON.stringify(purchaseData));
 }
 
-
 // Función para cargar las entradas del diario desde el localStorage
 function loadDiaryFromLocalStorage() {
     const diaryData = JSON.parse(localStorage.getItem('diaryData'));
@@ -821,26 +898,27 @@ function loadDiaryFromLocalStorage() {
             newRow.insertCell(3).innerText = debe;
             newRow.insertCell(4).innerText = haber;
 
-            // Agregar botón "Eliminar"
-            const deleteCell = newRow.insertCell(5);
-            const deleteButton = document.createElement("button");
-            deleteButton.innerText = "Eliminar";
-            deleteButton.className = "btn btn-danger btn-sm";
-            deleteButton.onclick = function () {
-                deleteDiaryEntry(newRow, debe, haber); // Llama a la función de eliminación del diario
-            };
-            deleteCell.appendChild(deleteButton);
         });
     }
 }
 
-// Función para cargar las compras desde el localStorage
+// Función para cargar las compras desde el localStorage y ordenarlas por fecha
 function loadPurchasesFromLocalStorage() {
     const purchaseData = JSON.parse(localStorage.getItem('purchaseData'));
     if (purchaseData && Array.isArray(purchaseData)) {
+        // Ordenar las compras por fecha en formato DD/MM/YYYY
+        purchaseData.sort((a, b) => {
+            const [dayA, monthA, yearA] = a.fechaCompra.split("/").map(Number);
+            const [dayB, monthB, yearB] = b.fechaCompra.split("/").map(Number);
+            const dateA = new Date(yearA, monthA - 1, dayA);
+            const dateB = new Date(yearB, monthB - 1, dayB);
+            return dateA - dateB; // Orden ascendente por fecha
+        });
+
+        // Obtener el cuerpo de la tabla
         const table = document.getElementById("purchaseTable").getElementsByTagName("tbody")[0];
         
-        // Cargar cada compra desde el localStorage
+        // Insertar las compras ordenadas en la tabla
         purchaseData.forEach(({ fechaCompra, proveedorCompra, numeroDocumentoCompra, montoCompra, tipoDocumentoCompra, ivaCompra, formaPagoCompra }) => {
             // Insertar una nueva fila en la tabla
             const newRow = table.insertRow();
@@ -867,6 +945,8 @@ function loadPurchasesFromLocalStorage() {
         updateMayorTable();
     }
 }
+
+
 function saveCuentasToLocalStorage() {
     localStorage.setItem('cuentas', JSON.stringify(cuentas));
 }
