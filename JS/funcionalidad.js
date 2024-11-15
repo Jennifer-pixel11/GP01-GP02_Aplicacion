@@ -752,64 +752,11 @@ function deleteSalesEntry(row, monto, tipoDocumentoVenta, formaPagoVenta, ivaVen
 
     // Actualizar el Libro Mayor y el almacenamiento local
     updateMayorTable();  // Actualiza la tabla del Libro Mayor
+    updateDiaryTable();
     saveCuentasToLocalStorage();  // Guarda los cambios de cuentas en el almacenamiento local
     saveSalesToLocalStorage();  // Guarda las ventas restantes en el almacenamiento local
 }
 
-// Función para eliminar una entrada de compra
-/*function deletePurchaseEntry(row, monto, tipoDocumentoCompra, formaPagoCompra, ivaCompra) {
-    const table = document.getElementById("purchaseTable").getElementsByTagName("tbody")[0];
-    table.removeChild(row);  // Eliminar la fila de la tabla de compras
-
-    // Lógica para revertir las cuentas según la forma de pago y el tipo de documento
-    if (tipoDocumentoCompra === "Factura") {
-        // Si es una Factura (sin IVA)
-        if (formaPagoCompra === "Contado") {
-            // Revertir el decremento en Caja
-            cuentas["Caja"].saldo += monto;
-            // Revertir la incremento en Inventario
-            cuentas["Inventario"].saldo -= monto / 1.13;  // Subir el monto original sin IVA
-            cuentas["Caja"].movimientos.pop();  // Eliminar el último movimiento en Caja
-            cuentas["Inventario"].movimientos.pop();  // Eliminar el último movimiento en Inventario
-        } else if (formaPagoCompra === "Credito") {
-            // Revertir el incremento en Proveedores
-            cuentas["Proveedores"].saldo -= monto;
-            // Revertir la incremento en Inventario
-            cuentas["Inventario"].saldo -= monto / 1.13;  // Subir el monto original sin IVA
-            cuentas["Proveedores"].movimientos.pop();  // Eliminar el último movimiento en Proveedores
-            cuentas["Inventario"].movimientos.pop();  // Eliminar el último movimiento en Inventario
-        }
-    } else if (tipoDocumentoCompra === "CCF") {
-        // Si es CCF (Con IVA)
-        if (formaPagoCompra === "Contado") {
-            // Revertir el decremento en Caja
-            cuentas["Caja"].saldo += monto;
-            // Revertir la incremento en Inventario
-            cuentas["Inventario"].saldo -= monto / 1.13;  // Subir el monto original sin IVA
-            // Revertir el decremento en IVA por Pagar
-            cuentas["IvaCredito"].saldo -= ivaCompra;
-            cuentas["Caja"].movimientos.pop();  // Eliminar el último movimiento en Caja
-            cuentas["Inventario"].movimientos.pop();  // Eliminar el último movimiento en Inventario
-            cuentas["IvaCredito"].movimientos.pop();  // Eliminar el último movimiento en IVA
-        } else if (formaPagoCompra === "Credito") {
-            // Revertir el incremento en Proveedores
-            cuentas["Proveedores"].saldo -= monto;
-            // Revertir la incremento en Inventario
-            cuentas["Inventario"].saldo -= monto / 1.13;  // Subir el monto original sin IVA
-            // Revertir el decremento en IVA por Pagar
-            cuentas["IvaCredito"].saldo -= ivaCompra;
-            cuentas["Proveedores"].movimientos.pop();  // Eliminar el último movimiento en Proveedores
-            cuentas["Inventario"].movimientos.pop();  // Eliminar el último movimiento en Inventario
-            cuentas["IvaCredito"].movimientos.pop();  // Eliminar el último movimiento en IVA
-        }
-    }
-
-    // Actualizar el Libro Mayor y el almacenamiento local
-    updateMayorTable();  // Actualiza la tabla del Libro Mayor
-    saveCuentasToLocalStorage();  // Guarda los cambios de cuentas en el almacenamiento local
-    savePurchaseToLocalStorage();  // Guarda las compras restantes en el almacenamiento local
-}*/
-// Función para eliminar una entrada de compra
 // Función para eliminar una entrada de compra
 function deletePurchaseEntry(row, monto, tipoDocumentoCompra, formaPagoCompra, ivaCompra) {
     const table = document.getElementById("purchaseTable").getElementsByTagName("tbody")[0];
@@ -887,6 +834,7 @@ function deletePurchaseEntry(row, monto, tipoDocumentoCompra, formaPagoCompra, i
 
     // Actualizar el Libro Mayor y el almacenamiento local
     updateMayorTable();  // Actualiza la tabla del Libro Mayor
+    updateDiaryTable();
     saveCuentasToLocalStorage();  // Guarda los cambios de cuentas en el almacenamiento local
     savePurchaseToLocalStorage();  // Guarda las compras restantes en el almacenamiento local
 }
@@ -1270,52 +1218,6 @@ function exportAllToExcel() {
     XLSX.utils.book_append_sheet(wb, contribuyentesWorksheet, "Libro de Contribuyentes");
     XLSX.utils.book_append_sheet(wb, consumidorWorksheet, "Libro de Consumidor Final");
 
-    /* Libro de Ventas
-    const salesData = [];
-    const salesHeaders = ["Fecha", "Cliente", "No. Documento", "Monto", "Forma de Pago", "Tipo Documento", "IVA"];
-    salesData.push(salesHeaders);
-    document.querySelectorAll('#salesTable tbody tr').forEach(row => {
-        const rowData = Array.from(row.children).map((cell, index) => {
-            // Omitir la última columna (columna "Eliminar", por ejemplo)
-            if (index === row.children.length - 1) {
-                return null; // No incluir la última columna
-            }
-            return cell.textContent;
-        }).filter(cell => cell !== null); // Filtra las celdas null (eliminando la columna "Eliminar")
-        salesData.push(rowData);
-    });
-    const salesWorksheet = XLSX.utils.aoa_to_sheet(salesData);
-
-    // Aplicar estilos para ventas
-    const salesHeaderStyle = {
-        fill: {
-            patternType: "solid",
-            fgColor: { rgb: "DDDDFF" }
-        },
-        font: {
-            bold: true,
-            color: { rgb: "000000" },
-            size: 14
-        },
-        alignment: {
-            horizontal: "center"
-        }
-    };
-
-    for (let col = 0; col < salesHeaders.length; col++) {
-        const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
-        applyCellStyle(salesWorksheet, cellRef, salesHeaderStyle);
-    }
-
-    for (let row = 1; row < salesData.length; row++) {
-        for (let col = 0; col < salesHeaders.length; col++) {
-            const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
-            applyCellStyle(salesWorksheet, cellRef, generalCellStyle);
-        }
-    }
-
-    XLSX.utils.book_append_sheet(wb, salesWorksheet, "Libro de Ventas");
-*/
     // Libro de Compras
     const purchaseData = [];
     const purchaseHeaders = ["Fecha", "Proveedor", "No. Documento", "Monto", "Forma de Pago", "Tipo Documento", "IVA"];
@@ -1366,7 +1268,6 @@ function exportAllToExcel() {
     // Descargar el archivo
     XLSX.writeFile(wb, 'Catálogo_de_Cuentas_Gimnasio.xlsx');
 }
-
 
 // Función para mostrar el contenido y ocultar la bienvenida
 function showContent(id) {
